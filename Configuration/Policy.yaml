@@ -1,0 +1,29 @@
+privilegeTargets:
+  'Neos\Flow\Security\Authorization\Privilege\Method\MethodPrivilege':
+    'Flownative.Media.Browser:ManageAssets':
+      matcher: 'method(Flownative\Media\Browser\Controller\(Asset|Image)Controller->(index|new|edit|update|initializeCreate|create|replaceAssetResource|updateAssetResource|initializeUpload|upload|tagAsset|delete|createTag|editTag|updateTag|deleteTag|addAssetToCollection|relatedNodes)Action())'
+
+    'Flownative.Media.Browser:ManageAssetCollections':
+      matcher: 'method(Flownative\Media\Browser\Controller\(Asset|Image)Controller->(createAssetCollection|editAssetCollection|updateAssetCollection|deleteAssetCollection)Action())'
+
+    'Flownative.Media.Browser:ReplaceAssetResource':
+      matcher: 'method(Flownative\Media\Browser\Controller\(Asset|Image)Controller->(replaceAssetResource|updateAssetResource)Action())'
+
+roles:
+  'Neos.Neos:AbstractEditor':
+    privileges:
+      -
+        privilegeTarget: 'Flownative.Media.Browser:ManageAssets'
+        permission: GRANT
+
+  'Neos.Neos:LivePublisher':
+    privileges:
+      -
+        privilegeTarget: 'Flownative.Media.Browser:ReplaceAssetResource'
+        permission: GRANT
+
+  'Neos.Neos:Administrator':
+    privileges:
+      -
+        privilegeTarget: 'Flownative.Media.Browser:ManageAssetCollections'
+        permission: GRANT

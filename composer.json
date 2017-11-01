@@ -1,0 +1,24 @@
+{
+    "name": "flownative/media-browser",
+    "description": "",
+    "type": "neos-package",
+    "license": "",
+    "authors": [
+    ],
+    "require": {
+        "neos/neos": "3.*",
+        "neos/media-browser": "3.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Flownative\\Media\\Browser": "Classes"
+        }
+    },
+    "extra": {
+        "neos": {
+            "package-key": "Flownative.Media.Browser"
+        },
+        "applied-flow-migrations": [
+        ]
+    }
+}
