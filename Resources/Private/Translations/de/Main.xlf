@@ -164,6 +164,12 @@
       <trans-unit id="tooltip.thumbnailView" xml:space="preserve" approved="yes">
 				<source>Thumbnail view</source>
 			<target xml:lang="de">Miniaturansicht</target></trans-unit>
+      <trans-unit id="connectionError" xml:space="preserve" approved="yes">
+				<source>Connection error</source>
+			<target xml:lang="de">Verbindungsfehler</target></trans-unit>
+      <trans-unit id="mediaSources" xml:space="preserve" approved="yes">
+				<source>Media sources</source>
+			<target xml:lang="de">Medienquellen</target></trans-unit>
       <trans-unit id="collections" xml:space="preserve" approved="yes">
 				<source>Collections</source>
 			<target xml:lang="de">Sammlungen</target></trans-unit>

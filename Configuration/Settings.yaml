@@ -11,6 +11,11 @@ Flownative:
         - 'resource://Neos.Neos/Public/Styles/Neos.css'
         - 'resource://Flownative.Media.Browser/Public/Styles/MediaBrowser.css'
 
+      assetSources:
+        neos:
+          assetSource: 'Flownative\Media\Browser\AssetSource\NeosAssetSource'
+          assetSourceOptions: []
+
 Neos:
   Flow:
     security:

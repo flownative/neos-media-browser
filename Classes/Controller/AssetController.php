@@ -5,31 +5,38 @@ namespace Flownative\Media\Browser\Controller;
  * This file is part of the Flownative.Media.Browser package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
+ * (c) Robert Lemke, Flownative GmbH - www.flownative.com
  *
  * This package is Open Source Software. For the full copyright and license
  * information, please view the LICENSE file which was distributed with this
  * source code.
  */
 
+use Doctrine\Common\Persistence\Proxy as DoctrineProxy;
+use Doctrine\ORM\EntityNotFoundException;
+use Flownative\Media\Browser\AssetSource\AssetNotFoundException;
+use Flownative\Media\Browser\AssetSource\AssetSourceConnectionException;
+use Flownative\Media\Browser\AssetSource\AssetSourceInterface;
+use Flownative\Media\Browser\Domain\Session\BrowserState;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
+use Neos\ContentRepository\Domain\Repository\NodeDataRepository;
 use Neos\Error\Messages\Error;
 use Neos\Error\Messages\Message;
 use Neos\Flow\Annotations as Flow;
-use Doctrine\Common\Persistence\Proxy as DoctrineProxy;
-use Doctrine\ORM\EntityNotFoundException;
-use Neos\ContentRepository\Domain\Repository\NodeDataRepository;
 use Neos\Flow\I18n\Translator;
 use Neos\Flow\Mvc\Controller\ActionController;
 use Neos\Flow\Mvc\Exception\InvalidArgumentValueException;
+use Neos\Flow\Mvc\Exception\StopActionException;
+use Neos\Flow\Mvc\Exception\UnsupportedRequestTypeException;
 use Neos\Flow\Mvc\View\JsonView;
 use Neos\Flow\Mvc\View\ViewInterface;
 use Neos\Flow\Package\PackageManagerInterface;
 use Neos\Flow\Property\TypeConverter\PersistentObjectConverter;
 use Neos\Flow\ResourceManagement\PersistentResource;
-use Neos\Media\Domain\Model\AssetCollection;
-use Neos\Media\Domain\Model\AssetInterface;
 use Neos\FluidAdaptor\View\TemplateView;
 use Neos\Media\Domain\Model\Asset;
+use Neos\Media\Domain\Model\AssetCollection;
+use Neos\Media\Domain\Model\AssetInterface;
 use Neos\Media\Domain\Model\Tag;
 use Neos\Media\Domain\Repository\AssetCollectionRepository;
 use Neos\Media\Domain\Repository\AssetRepository;
@@ -39,7 +46,6 @@ use Neos\Media\Domain\Repository\ImageRepository;
 use Neos\Media\Domain\Repository\TagRepository;
 use Neos\Media\Domain\Repository\VideoRepository;
 use Neos\Media\Domain\Service\AssetService;
-use Flownative\Media\Browser\Domain\Session\BrowserState;
 use Neos\Media\TypeConverter\AssetInterfaceConverter;
 use Neos\Neos\Controller\BackendUserTranslationTrait;
 use Neos\Neos\Controller\CreateContentContextTrait;
@@ -48,8 +54,8 @@ use Neos\Neos\Domain\Repository\DomainRepository;
 use Neos\Neos\Domain\Repository\SiteRepository;
 use Neos\Neos\Domain\Service\ContentDimensionPresetSourceInterface;
 use Neos\Neos\Service\UserService;
-use Neos\Utility\MediaTypes;
 use Neos\Utility\Files;
+use Neos\Utility\MediaTypes;
 
 /**
  * Controller for asset handling
@@ -149,6 +155,17 @@ class AssetController extends ActionController
     protected $translator;
 
     /**
+     * @Flow\InjectConfiguration(path="assetSources")
+     * @var array
+     */
+    protected $assetSourcesConfiguration;
+
+    /**
+     * @var AssetSourceInterface[]
+     */
+    protected $assetSources = [];
+
+    /**
      * @return void
      */
     public function initializeObject()
@@ -158,6 +175,10 @@ class AssetController extends ActionController
         if ($domain !== null && !$this->browserState->get('activeAssetCollection') && $this->browserState->get('automaticAssetCollectionSelection') !== true && $domain->getSite()->getAssetCollection() !== null) {
             $this->browserState->set('activeAssetCollection', $domain->getSite()->getAssetCollection());
             $this->browserState->set('automaticAssetCollectionSelection', true);
+        }
+
+        foreach ($this->assetSourcesConfiguration as $assetSourceIdentifier => $assetSourceConfiguration) {
+            $this->assetSources[$assetSourceIdentifier] = new $assetSourceConfiguration['assetSource'];
         }
     }
 
@@ -175,7 +196,8 @@ class AssetController extends ActionController
             'sortDirection' => $this->browserState->get('sortDirection'),
             'filter' => $this->browserState->get('filter'),
             'activeTag' => $this->browserState->get('activeTag'),
-            'activeAssetCollection' => $this->browserState->get('activeAssetCollection')
+            'activeAssetCollection' => $this->browserState->get('activeAssetCollection'),
+            'assetSources' => $this->assetSources
         ]);
     }
 
@@ -191,9 +213,10 @@ class AssetController extends ActionController
      * @param string $searchTerm
      * @param integer $collectionMode
      * @param AssetCollection $assetCollection
+     * @param string $assetSourceIdentifier
      * @return void
      */
-    public function indexAction($view = null, $sortBy = null, $sortDirection = null, $filter = null, $tagMode = self::TAG_GIVEN, Tag $tag = null, $searchTerm = null, $collectionMode = self::COLLECTION_GIVEN, AssetCollection $assetCollection = null)
+    public function indexAction($view = null, $sortBy = null, $sortDirection = null, $filter = null, $tagMode = self::TAG_GIVEN, Tag $tag = null, $searchTerm = null, $collectionMode = self::COLLECTION_GIVEN, AssetCollection $assetCollection = null, $assetSourceIdentifier = null)
     {
         if ($view !== null) {
             $this->browserState->set('view', $view);
@@ -236,10 +259,21 @@ class AssetController extends ActionController
                 $activeAssetCollection->__load();
             }
         } catch (EntityNotFoundException $exception) {
-            // If a removed tasset collection is still in the browser state it can not be fetched
+            // If a removed asset collection is still in the browser state it can not be fetched
             $this->browserState->set('activeAssetCollection', null);
             $activeAssetCollection = null;
         }
+
+        if ($assetSourceIdentifier !== null && isset($this->assetSources[$assetSourceIdentifier])) {
+            $this->browserState->set('activeAssetSourceIdentifier', $assetSourceIdentifier);
+        }
+
+        $activeAssetSourceIdentifier = $this->browserState->get('activeAssetSourceIdentifier');
+        if (!isset($this->assetSources[$activeAssetSourceIdentifier])) {
+            $assetSourceIdentifiers = array_keys($this->assetSources);
+            $activeAssetSourceIdentifier = reset($assetSourceIdentifiers);
+        }
+        $activeAssetSource = $this->assetSources[$activeAssetSourceIdentifier];
 
         // Unset active tag if it isn't available in the active asset collection
         if ($this->browserState->get('activeTag') && $activeAssetCollection !== null && !$activeAssetCollection->getTags()->contains($this->browserState->get('activeTag'))) {
@@ -288,21 +322,28 @@ class AssetController extends ActionController
             $tags[] = ['object' => $tag, 'count' => $this->assetRepository->countByTag($tag, $activeAssetCollection)];
         }
 
-        if ($searchTerm !== null) {
-            $assets = $this->assetRepository->findBySearchTermOrTags($searchTerm, [], $activeAssetCollection);
-            $this->view->assign('searchTerm', $searchTerm);
-        } elseif ($this->browserState->get('tagMode') === self::TAG_NONE) {
-            $assets = $this->assetRepository->findUntagged($activeAssetCollection);
-        } elseif ($this->browserState->get('activeTag') !== null) {
-            $assets = $this->assetRepository->findByTag($this->browserState->get('activeTag'), $activeAssetCollection);
-        } else {
-            $assets = $activeAssetCollection === null ? $this->assetRepository->findAll() : $this->assetRepository->findByAssetCollection($activeAssetCollection);
+        $assetBrowser = $activeAssetSource->getAssetBrowser();
+
+        try {
+            if ($searchTerm !== null) {
+                $assetProxies = $assetBrowser->findBySearchTerm($searchTerm);
+//                $assetProxies = $this->assetRepository->findBySearchTermOrTags($searchTerm, [], $activeAssetCollection);
+                $this->view->assign('searchTerm', $searchTerm);
+            } elseif ($this->browserState->get('tagMode') === self::TAG_NONE) {
+                $assetProxies = $this->assetRepository->findUntagged($activeAssetCollection);
+            } elseif ($this->browserState->get('activeTag') !== null) {
+                $assetProxies = $this->assetRepository->findByTag($this->browserState->get('activeTag'), $activeAssetCollection);
+            } else {
+                $assetProxies = $activeAssetCollection === null ? $assetBrowser->findAll() : $this->assetRepository->findByAssetCollection($activeAssetCollection);
+            }
+
+            $this->view->assign('assetProxies', $assetProxies);
+        } catch (AssetSourceConnectionException $e) {
+            $this->view->assign('connectionError', $e);
         }
 
         $allCollectionsCount = $this->assetRepository->countAll();
-        $maximumFileUploadSize = $this->maximumFileUploadSize();
         $this->view->assignMultiple([
-            'assets' => $assets,
             'tags' => $tags,
             'allCollectionsCount' => $allCollectionsCount,
             'allCount' => $activeAssetCollection ? $this->assetRepository->countByAssetCollection($activeAssetCollection) : $allCollectionsCount,
@@ -310,8 +351,10 @@ class AssetController extends ActionController
             'tagMode' => $this->browserState->get('tagMode'),
             'assetCollections' => $assetCollections,
             'argumentNamespace' => $this->request->getArgumentNamespace(),
-            'maximumFileUploadSize' => $maximumFileUploadSize,
-            'humanReadableMaximumFileUploadSize' => Files::bytesToSizeString($maximumFileUploadSize)
+            'maximumFileUploadSize' => $this->maximumFileUploadSize(),
+            'humanReadableMaximumFileUploadSize' => Files::bytesToSizeString($this->maximumFileUploadSize()),
+            'activeAssetSource' => $activeAssetSource,
+            'activeAssetSourceIdentifier' => $activeAssetSourceIdentifier
         ]);
     }
 
@@ -347,18 +390,67 @@ class AssetController extends ActionController
     }
 
     /**
+     * Show an asset
+     *
+     * @param string $assetSourceIdentifier
+     * @param string $assetProxyIdentifier
+     * @return void
+     * @throws StopActionException
+     * @throws UnsupportedRequestTypeException
+     */
+    public function showAction(string $assetSourceIdentifier, string $assetProxyIdentifier)
+    {
+        if (!isset($this->assetSources[$assetSourceIdentifier])) {
+            throw new \RuntimeException('Given asset source is not configured.', 1509702178632);
+        }
+
+        $assetBrowser = $this->assetSources[$assetSourceIdentifier]->getAssetBrowser();
+        try {
+            $assetProxy = $assetBrowser->getAssetProxy($assetProxyIdentifier);
+
+            $this->view->assignMultiple([
+//            'tags' => $assetProxy->getAssetCollections()->count() > 0 ? $this->tagRepository->findByAssetCollections($assetProxy->getAssetCollections()->toArray()) : $this->tagRepository->findAll(),
+                'assetProxy' => $assetProxy,
+//            'assetCollections' => $this->assetCollectionRepository->findAll()
+            ]);
+        } catch (AssetNotFoundException $e) {
+            $this->throwStatus(404, 'Asset not found');
+        } catch (AssetSourceConnectionException $e) {
+            $this->view->assign('connectionError', $e);
+        }
+
+    }
+
+    /**
      * Edit an asset
      *
-     * @param Asset $asset
+     * @param string $assetSourceIdentifier
+     * @param string $assetProxyIdentifier
      * @return void
+     * @throws StopActionException
+     * @throws UnsupportedRequestTypeException
      */
-    public function editAction(Asset $asset)
+    public function editAction(string $assetSourceIdentifier, string $assetProxyIdentifier)
     {
-        $this->view->assignMultiple([
-            'tags' => $asset->getAssetCollections()->count() > 0 ? $this->tagRepository->findByAssetCollections($asset->getAssetCollections()->toArray()) : $this->tagRepository->findAll(),
-            'asset' => $asset,
-            'assetCollections' => $this->assetCollectionRepository->findAll()
-        ]);
+        if (!isset($this->assetSources[$assetSourceIdentifier])) {
+            throw new \RuntimeException('Given asset source is not configured.', 1509632166496);
+        }
+
+        $assetBrowser = $this->assetSources[$assetSourceIdentifier]->getAssetBrowser();
+        try {
+            $assetProxy = $assetBrowser->getAssetProxy($assetProxyIdentifier);
+
+            $this->view->assignMultiple([
+//            'tags' => $assetProxy->getAssetCollections()->count() > 0 ? $this->tagRepository->findByAssetCollections($assetProxy->getAssetCollections()->toArray()) : $this->tagRepository->findAll(),
+                'assetProxy' => $assetProxy,
+//            'assetCollections' => $this->assetCollectionRepository->findAll()
+            ]);
+        } catch (AssetNotFoundException $e) {
+            $this->throwStatus(404, 'Asset not found');
+        } catch (AssetSourceConnectionException $e) {
+            $this->view->assign('connectionError', $e);
+        }
+
     }
 
     /**
