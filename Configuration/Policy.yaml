@@ -1,5 +1,8 @@
 privilegeTargets:
   'Neos\Flow\Security\Authorization\Privilege\Method\MethodPrivilege':
+    'Flownative.Media.Browser:Widgets':
+      matcher: 'method(Flownative\Media\Browser\ViewHelpers\Controller\(Paginate)Controller->(index)Action())'
+
     'Flownative.Media.Browser:ManageAssets':
       matcher: 'method(Flownative\Media\Browser\Controller\(Asset|Image)Controller->(index|new|show|edit|update|initializeCreate|create|replaceAssetResource|updateAssetResource|initializeUpload|upload|tagAsset|delete|createTag|editTag|updateTag|deleteTag|addAssetToCollection|relatedNodes)Action())'
 
@@ -26,4 +29,10 @@ roles:
     privileges:
       -
         privilegeTarget: 'Flownative.Media.Browser:ManageAssetCollections'
+        permission: GRANT
+
+  'Neos.Flow:Everybody':
+    privileges:
+      -
+        privilegeTarget: 'Flownative.Media.Browser:Widgets'
         permission: GRANT

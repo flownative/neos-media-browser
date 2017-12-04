@@ -65,6 +65,12 @@
 			<trans-unit id="dragAndDropOnTagOrCollection" xml:space="preserve">
 				<source>Drag and drop on tag or collection</source>
 			</trans-unit>
+			<trans-unit id="view" xml:space="preserve">
+				<source>View</source>
+			</trans-unit>
+			<trans-unit id="viewAsset" xml:space="preserve">
+				<source>View asset</source>
+			</trans-unit>
 			<trans-unit id="editAsset" xml:space="preserve">
 				<source>Edit asset</source>
 			</trans-unit>

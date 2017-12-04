@@ -6,7 +6,7 @@
 <f:section name="Options">
     <div class="neos-file-options">
         <span class="count">
-            {neos:backend.translate(id: 'search.itemCount', arguments: {0: '{assets -> f:count()}'}, package: 'Flownative.Media.Browser')}
+            {neos:backend.translate(id: 'search.itemCount', arguments: {0: searchResultCount}, package: 'Flownative.Media.Browser')}
             <f:if condition="{searchTerm}"> {neos:backend.translate(id: 'search.foundMatches', arguments: {0: searchTerm}, package: 'Flownative.Media.Browser')}</f:if>
         </span>
         <f:if condition="!{activeAssetSource.readOnly}">
@@ -105,7 +105,7 @@
     </div>
     </f:if>
     <div class="neos-media-aside-group">
-        <f:if condition="!{activeAssetSource.readOnly}">
+        <f:if condition="!{activeAssetSource.readOnly} && false"><!-- disabled, until support for asset collections was re-implemented -->
             <f:security.ifAccess privilegeTarget="Flownative.Media.Browser:ManageAssetCollections">
                 <f:then>
                     <h2>
@@ -333,4 +333,5 @@
         <script type="text/javascript" src="{f:uri.resource(package: 'Flownative.Media.Browser', path: 'JavaScript/upload.js')}"></script>
         <script type="text/javascript" src="{f:uri.resource(package: 'Flownative.Media.Browser', path: 'JavaScript/collections-and-tagging.js')}"></script>
     </f:if>
+    <script type="text/javascript" src="{f:uri.resource(package: 'Flownative.Media.Browser', path: 'JavaScript/select.js')}"></script>
 </f:section>

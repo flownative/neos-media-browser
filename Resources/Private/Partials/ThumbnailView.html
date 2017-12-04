@@ -1,7 +1,7 @@
 {namespace m=Neos\Media\ViewHelpers}
 {namespace mediaBrowser=Flownative\Media\Browser\ViewHelpers}
 {namespace neos=Neos\Neos\ViewHelpers}
-
+<mediaBrowser:paginate queryResult="{assetProxies}" as="paginatedAssetProxies" configuration="{itemsPerPage: 30, maximumNumberOfLinks: 7}">
     <ul class="neos-thumbnails asset-list">
         <f:alias map="{
             'editLabel': '{neos:backend.translate(id: \'edit\', package: \'Neos.Neos\')}',
@@ -11,9 +11,9 @@
             'deleteLabel': '{neos:backend.translate(id: \'delete\', package: \'Neos.Neos\')}',
             'deleteAssetLabel': '{neos:backend.translate(id: \'deleteAsset\', package: \'Flownative.Media.Browser\')}'
         }">
-            <f:for each="{assetProxies}" as="assetProxy">
+            <f:for each="{paginatedAssetProxies}" as="assetProxy">
                 <li class="asset">
-                    <f:if condition="!{activeAssetSource.readOnly}">
+                    <f:if condition="{activeAssetSource.readOnly}">
                         <f:then>
                             <f:link.action action="edit" class="neos-thumbnail" arguments="{assetSourceIdentifier: activeAssetSourceIdentifier, assetProxyIdentifier: assetProxy.identifier}" data="{asset-identifier: '{assetProxy.identifier}'}">
                                 <div class="neos-img-container draggable-asset {f:if(condition: '{assetProxy.asset.tags -> f:count()} === 0', then: ' neos-media-untagged')}">
@@ -22,7 +22,7 @@
                             </f:link.action>
                         </f:then>
                         <f:else>
-                            <f:link.action action="show" class="neos-thumbnail" arguments="{assetSourceIdentifier: activeAssetSourceIdentifier, assetProxyIdentifier: assetProxy.identifier}">
+                            <f:link.action action="show" class="neos-thumbnail" arguments="{assetSourceIdentifier: activeAssetSourceIdentifier, assetProxyIdentifier: assetProxy.identifier}" data="{asset-identifier: '{assetProxy.identifier}'}">
                                 <div class="neos-img-container">
                                     <img src="{assetProxy.thumbnailUri}" alt="" width="250" height="250" />
                                 </div>
@@ -69,3 +69,4 @@
             </f:for>
         </f:alias>
     </ul>
+</mediaBrowser:paginate>

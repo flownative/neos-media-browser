@@ -1,5 +1,5 @@
 <?php
-namespace Flownative\Media\Browser\AssetSource;
+namespace Flownative\Media\Browser\AssetSource\Neos;
 
 /*
  * This file is part of the Flownative.Media.Browser package.
@@ -12,6 +12,7 @@ namespace Flownative\Media\Browser\AssetSource;
  * source code.
  */
 
+use Flownative\Media\Browser\AssetSource\AssetProxyInterface;
 use Neos\Flow\Annotations\Inject;
 use Neos\Flow\Http\Uri;
 use Neos\Flow\Persistence\PersistenceManagerInterface;
@@ -100,7 +101,7 @@ final class NeosAssetProxy implements AssetProxyInterface
      */
     public function getFileSize(): int
     {
-        return $this->asset->getResource()->getFileSize();
+        return $this->asset->getResource()->getFileSize() ?? 0;
     }
 
     /**
@@ -108,7 +109,7 @@ final class NeosAssetProxy implements AssetProxyInterface
      */
     public function getMediaType(): string
     {
-        return $this->asset->getMediaType();
+        return $this->asset->getMediaType() ?? 'application/octet-stream';
     }
 
     /**
@@ -117,8 +118,9 @@ final class NeosAssetProxy implements AssetProxyInterface
     public function getWidthInPixels(): ?int
     {
         if ($this->asset instanceof ImageInterface) {
-            return $this->asset->getWidth();
+            return $this->asset->getWidth() ?? null;
         }
+        return 0;
     }
 
     /**
@@ -127,8 +129,9 @@ final class NeosAssetProxy implements AssetProxyInterface
     public function getHeightInPixels(): ?int
     {
         if ($this->asset instanceof ImageInterface) {
-            return $this->asset->getHeight();
+            return $this->asset->getHeight() ?? 0;
         }
+        return 0;
     }
 
     /**
@@ -148,7 +151,7 @@ final class NeosAssetProxy implements AssetProxyInterface
     {
         $thumbnailConfiguration = $this->thumbnailService->getThumbnailConfigurationForPreset('Flownative.Media.Browser:Thumbnail');
         $thumbnailData = $this->assetService->getThumbnailUriAndSizeForAsset($this->asset, $thumbnailConfiguration);
-        return new Uri($thumbnailData['src']);
+        return new Uri($thumbnailData['src'] ?? '');
     }
 
     /**
@@ -160,6 +163,6 @@ final class NeosAssetProxy implements AssetProxyInterface
     {
         $thumbnailConfiguration = $this->thumbnailService->getThumbnailConfigurationForPreset('Flownative.Media.Browser:Preview');
         $thumbnailData = $this->assetService->getThumbnailUriAndSizeForAsset($this->asset, $thumbnailConfiguration);
-        return new Uri($thumbnailData['src']);
+        return new Uri($thumbnailData['src'] ?? '');
     }
 }

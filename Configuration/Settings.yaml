@@ -13,7 +13,7 @@ Flownative:
 
       assetSources:
         neos:
-          assetSource: 'Flownative\Media\Browser\AssetSource\NeosAssetSource'
+          assetSource: 'Flownative\Media\Browser\AssetSource\Neos\NeosAssetSource'
           assetSourceOptions: []
 
 Neos:
@@ -29,7 +29,8 @@ Neos:
                   controllerObjectNamePattern: 'Flownative\Media\Browser\Controller\.*'
     mvc:
       routes:
-        'Flownative.Media.Browser': true
+        'Flownative.Media.Browser':
+          position: 'before Neos.Media.Browser'
 
   Media:
     thumbnailPresets:

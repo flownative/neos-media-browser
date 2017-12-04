@@ -20,9 +20,9 @@ interface AssetSourceInterface
     public function getLabel(): string;
 
     /**
-     * @return AssetBrowserInterface
+     * @return AssetProxyRepositoryInterface
      */
-    public function getAssetBrowser(): AssetBrowserInterface;
+    public function getAssetProxyRepository(): AssetProxyRepositoryInterface;
 
     /**
      * @return bool

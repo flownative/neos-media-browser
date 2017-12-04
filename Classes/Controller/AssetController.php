@@ -17,6 +17,8 @@ use Doctrine\ORM\EntityNotFoundException;
 use Flownative\Media\Browser\AssetSource\AssetNotFoundException;
 use Flownative\Media\Browser\AssetSource\AssetSourceConnectionException;
 use Flownative\Media\Browser\AssetSource\AssetSourceInterface;
+use Flownative\Media\Browser\AssetSource\AssetTypeFilter;
+use Flownative\Media\Browser\AssetSource\Neos\NeosAssetProxyQueryResult;
 use Flownative\Media\Browser\Domain\Session\BrowserState;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Repository\NodeDataRepository;
@@ -40,11 +42,7 @@ use Neos\Media\Domain\Model\AssetInterface;
 use Neos\Media\Domain\Model\Tag;
 use Neos\Media\Domain\Repository\AssetCollectionRepository;
 use Neos\Media\Domain\Repository\AssetRepository;
-use Neos\Media\Domain\Repository\AudioRepository;
-use Neos\Media\Domain\Repository\DocumentRepository;
-use Neos\Media\Domain\Repository\ImageRepository;
 use Neos\Media\Domain\Repository\TagRepository;
-use Neos\Media\Domain\Repository\VideoRepository;
 use Neos\Media\Domain\Service\AssetService;
 use Neos\Media\TypeConverter\AssetInterfaceConverter;
 use Neos\Neos\Controller\BackendUserTranslationTrait;
@@ -231,7 +229,7 @@ class AssetController extends ActionController
             $this->view->assign('sortDirection', $sortDirection);
         }
         if ($filter !== null) {
-            $this->browserState->set('filter', $filter);
+            $this->browserState->set('filter', new AssetTypeFilter($filter));
             $this->view->assign('filter', $filter);
         }
         if ($tagMode === self::TAG_GIVEN && $tag !== null) {
@@ -281,23 +279,6 @@ class AssetController extends ActionController
             $this->view->assign('activeTag', null);
         }
 
-        if ($this->browserState->get('filter') !== 'All') {
-            switch ($this->browserState->get('filter')) {
-                case 'Image':
-                    $this->assetRepository = new ImageRepository();
-                    break;
-                case 'Document':
-                    $this->assetRepository = new DocumentRepository();
-                    break;
-                case 'Video':
-                    $this->assetRepository = new VideoRepository();
-                    break;
-                case 'Audio':
-                    $this->assetRepository = new AudioRepository();
-                    break;
-            }
-        }
-
         switch ($this->browserState->get('sortBy')) {
             case 'Name':
                 $this->assetRepository->setDefaultOrderings(['resource.filename' => $this->browserState->get('sortDirection')]);
@@ -322,19 +303,20 @@ class AssetController extends ActionController
             $tags[] = ['object' => $tag, 'count' => $this->assetRepository->countByTag($tag, $activeAssetCollection)];
         }
 
-        $assetBrowser = $activeAssetSource->getAssetBrowser();
+        $assetProxyRepository = $activeAssetSource->getAssetProxyRepository();
+        $assetProxyRepository->filterByType(new AssetTypeFilter($this->browserState->get('filter')));
 
+        // FIXME: re-implement support for asset collections
         try {
             if ($searchTerm !== null) {
-                $assetProxies = $assetBrowser->findBySearchTerm($searchTerm);
-//                $assetProxies = $this->assetRepository->findBySearchTermOrTags($searchTerm, [], $activeAssetCollection);
+                $assetProxies = $assetProxyRepository->findBySearchTerm($searchTerm);
                 $this->view->assign('searchTerm', $searchTerm);
             } elseif ($this->browserState->get('tagMode') === self::TAG_NONE) {
-                $assetProxies = $this->assetRepository->findUntagged($activeAssetCollection);
+                $assetProxies = $assetProxyRepository->findUntagged();
             } elseif ($this->browserState->get('activeTag') !== null) {
-                $assetProxies = $this->assetRepository->findByTag($this->browserState->get('activeTag'), $activeAssetCollection);
+                $assetProxies = $assetProxyRepository->findByTag($this->browserState->get('activeTag'));
             } else {
-                $assetProxies = $activeAssetCollection === null ? $assetBrowser->findAll() : $this->assetRepository->findByAssetCollection($activeAssetCollection);
+                $assetProxies = $activeAssetCollection === null ? $assetProxyRepository->findAll() : $assetProxyRepository->findAll();
             }
 
             $this->view->assign('assetProxies', $assetProxies);
@@ -342,11 +324,12 @@ class AssetController extends ActionController
             $this->view->assign('connectionError', $e);
         }
 
-        $allCollectionsCount = $this->assetRepository->countAll();
+        $allCollectionsCount = $assetProxyRepository->countAll();
         $this->view->assignMultiple([
             'tags' => $tags,
             'allCollectionsCount' => $allCollectionsCount,
             'allCount' => $activeAssetCollection ? $this->assetRepository->countByAssetCollection($activeAssetCollection) : $allCollectionsCount,
+            'searchResultCount' => isset($assetProxies) ? $assetProxies->count() : 0,
             'untaggedCount' => $this->assetRepository->countUntagged($activeAssetCollection),
             'tagMode' => $this->browserState->get('tagMode'),
             'assetCollections' => $assetCollections,
@@ -404,7 +387,7 @@ class AssetController extends ActionController
             throw new \RuntimeException('Given asset source is not configured.', 1509702178632);
         }
 
-        $assetBrowser = $this->assetSources[$assetSourceIdentifier]->getAssetBrowser();
+        $assetBrowser = $this->assetSources[$assetSourceIdentifier]->getAssetProxyRepository();
         try {
             $assetProxy = $assetBrowser->getAssetProxy($assetProxyIdentifier);
 
@@ -436,7 +419,7 @@ class AssetController extends ActionController
             throw new \RuntimeException('Given asset source is not configured.', 1509632166496);
         }
 
-        $assetBrowser = $this->assetSources[$assetSourceIdentifier]->getAssetBrowser();
+        $assetBrowser = $this->assetSources[$assetSourceIdentifier]->getAssetProxyRepository();
         try {
             $assetProxy = $assetBrowser->getAssetProxy($assetProxyIdentifier);
 

@@ -1,5 +1,5 @@
 <?php
-namespace Flownative\Media\Browser\AssetSource;
+namespace Flownative\Media\Browser\AssetSource\Neos;
 
 /*
  * This file is part of the Flownative.Media.Browser package.
@@ -12,10 +12,13 @@ namespace Flownative\Media\Browser\AssetSource;
  * source code.
  */
 
+use Flownative\Media\Browser\AssetSource\AssetProxyRepositoryInterface;
+use Flownative\Media\Browser\AssetSource\AssetSourceInterface;
+
 final class NeosAssetSource implements AssetSourceInterface
 {
     /**
-     * @var NeosAssetBrowser
+     * @var NeosAssetProxyRepository
      */
     protected $assetBrowser;
 
@@ -25,12 +28,12 @@ final class NeosAssetSource implements AssetSourceInterface
     }
 
     /**
-     * @return AssetBrowserInterface
+     * @return AssetProxyRepositoryInterface
      */
-    public function getAssetBrowser(): AssetBrowserInterface
+    public function getAssetProxyRepository(): AssetProxyRepositoryInterface
     {
         if ($this->assetBrowser === null) {
-            $this->assetBrowser = new NeosAssetBrowser();
+            $this->assetBrowser = new NeosAssetProxyRepository();
         }
 
         return $this->assetBrowser;

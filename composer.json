@@ -1,6 +1,6 @@
 {
     "name": "flownative/media-browser",
-    "description": "",
+    "description": "This Flow package is a replacement for the Neos Media Browser, with support for third-party Asset Sources.",
     "type": "neos-package",
     "license": "",
     "authors": [
