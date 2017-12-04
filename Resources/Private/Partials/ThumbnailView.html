@@ -17,14 +17,20 @@
                         <f:then>
                             <f:link.action action="edit" class="neos-thumbnail" arguments="{assetSourceIdentifier: activeAssetSourceIdentifier, assetProxyIdentifier: assetProxy.identifier}" data="{asset-identifier: '{assetProxy.identifier}'}">
                                 <div class="neos-img-container draggable-asset {f:if(condition: '{assetProxy.asset.tags -> f:count()} === 0', then: ' neos-media-untagged')}">
-                                    <img src="{assetProxy.thumbnailUri}" alt="" width="250" height="250" />
+                                    <f:if condition="{assetProxy.thumbnailUri}">
+                                        <f:then><img src="{assetProxy.thumbnailUri}" alt="" width="250" height="250" /></f:then>
+                                        <f:else><img src="{f:uri.resource(path:'Images/dummy-image.svg', package:'Neos.Neos')}" alt="" width="250" height="250" /></f:else>
+                                    </f:if>
                                 </div>
                             </f:link.action>
                         </f:then>
                         <f:else>
                             <f:link.action action="show" class="neos-thumbnail" arguments="{assetSourceIdentifier: activeAssetSourceIdentifier, assetProxyIdentifier: assetProxy.identifier}" data="{asset-identifier: '{assetProxy.identifier}'}">
                                 <div class="neos-img-container">
-                                    <img src="{assetProxy.thumbnailUri}" alt="" width="250" height="250" />
+                                    <f:if condition="{assetProxy.thumbnailUri}">
+                                        <f:then><img src="{assetProxy.thumbnailUri}" alt="" width="250" height="250" /></f:then>
+                                        <f:else><img src="{f:uri.resource(path:'Images/dummy-image.svg', package:'Neos.Neos')}" alt="" width="250" height="250" /></f:else>
+                                    </f:if>
                                 </div>
                             </f:link.action>
                         </f:else>

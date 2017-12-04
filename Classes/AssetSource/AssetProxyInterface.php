@@ -32,7 +32,7 @@ interface AssetProxyInterface
 
     public function getHeightInPixels(): ?int;
 
-    public function getThumbnailUri(): UriInterface;
+    public function getThumbnailUri(): ?UriInterface;
 
-    public function getPreviewUri(): UriInterface;
+    public function getPreviewUri(): ?UriInterface;
 }

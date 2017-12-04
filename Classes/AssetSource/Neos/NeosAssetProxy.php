@@ -147,11 +147,11 @@ final class NeosAssetProxy implements AssetProxyInterface
      * @throws AssetServiceException
      * @throws ThumbnailServiceException
      */
-    public function getThumbnailUri(): UriInterface
+    public function getThumbnailUri(): ?UriInterface
     {
         $thumbnailConfiguration = $this->thumbnailService->getThumbnailConfigurationForPreset('Flownative.Media.Browser:Thumbnail');
         $thumbnailData = $this->assetService->getThumbnailUriAndSizeForAsset($this->asset, $thumbnailConfiguration);
-        return new Uri($thumbnailData['src'] ?? '');
+        return isset($thumbnailData['src']) ? new Uri($thumbnailData['src']) : null;
     }
 
     /**
@@ -159,10 +159,10 @@ final class NeosAssetProxy implements AssetProxyInterface
      * @throws AssetServiceException
      * @throws ThumbnailServiceException
      */
-    public function getPreviewUri(): UriInterface
+    public function getPreviewUri(): ?UriInterface
     {
         $thumbnailConfiguration = $this->thumbnailService->getThumbnailConfigurationForPreset('Flownative.Media.Browser:Preview');
         $thumbnailData = $this->assetService->getThumbnailUriAndSizeForAsset($this->asset, $thumbnailConfiguration);
-        return new Uri($thumbnailData['src'] ?? '');
+        return isset($thumbnailData['src']) ? new Uri($thumbnailData['src']) : null;
     }
 }
