@@ -18,7 +18,6 @@ use Flownative\Media\Browser\AssetSource\AssetNotFoundException;
 use Flownative\Media\Browser\AssetSource\AssetSourceConnectionException;
 use Flownative\Media\Browser\AssetSource\AssetSourceInterface;
 use Flownative\Media\Browser\AssetSource\AssetTypeFilter;
-use Flownative\Media\Browser\AssetSource\Neos\NeosAssetProxyQueryResult;
 use Flownative\Media\Browser\Domain\Session\BrowserState;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Repository\NodeDataRepository;
@@ -216,22 +215,24 @@ class AssetController extends ActionController
      */
     public function indexAction($view = null, $sortBy = null, $sortDirection = null, $filter = null, $tagMode = self::TAG_GIVEN, Tag $tag = null, $searchTerm = null, $collectionMode = self::COLLECTION_GIVEN, AssetCollection $assetCollection = null, $assetSourceIdentifier = null)
     {
-        if ($view !== null) {
-            $this->browserState->set('view', $view);
-            $this->view->assign('view', $view);
+        if ($assetSourceIdentifier !== null && isset($this->assetSources[$assetSourceIdentifier])) {
+            $this->browserState->setActiveAssetSourceIdentifier($assetSourceIdentifier);
         }
-        if ($sortBy !== null) {
-            $this->browserState->set('sortBy', $sortBy);
-            $this->view->assign('sortBy', $sortBy);
+
+        $activeAssetSourceIdentifier = $this->browserState->getActiveAssetSourceIdentifier();
+        if (!isset($this->assetSources[$activeAssetSourceIdentifier])) {
+            $assetSourceIdentifiers = array_keys($this->assetSources);
+            $activeAssetSourceIdentifier = reset($assetSourceIdentifiers);
         }
-        if ($sortDirection !== null) {
-            $this->browserState->set('sortDirection', $sortDirection);
-            $this->view->assign('sortDirection', $sortDirection);
+        $activeAssetSource = $this->assetSources[$activeAssetSourceIdentifier];
+
+        foreach (['view', 'sortBy', 'sortDirection', 'filter'] as $optionName) {
+            if (!empty($$optionName)) {
+                $this->browserState->set($optionName, $$optionName);
+            }
+            $this->view->assign($optionName, $this->browserState->get($optionName));
         }
-        if ($filter !== null) {
-            $this->browserState->set('filter', new AssetTypeFilter($filter));
-            $this->view->assign('filter', $filter);
-        }
+
         if ($tagMode === self::TAG_GIVEN && $tag !== null) {
             $this->browserState->set('activeTag', $tag);
             $this->view->assign('activeTag', $tag);
@@ -249,6 +250,7 @@ class AssetController extends ActionController
             $this->view->assign('activeAssetCollection', null);
         }
         $this->browserState->set('collectionMode', $collectionMode);
+
         try {
             /** @var AssetCollection $activeAssetCollection */
             $activeAssetCollection = $this->browserState->get('activeAssetCollection');
@@ -262,21 +264,14 @@ class AssetController extends ActionController
             $activeAssetCollection = null;
         }
 
-        if ($assetSourceIdentifier !== null && isset($this->assetSources[$assetSourceIdentifier])) {
-            $this->browserState->set('activeAssetSourceIdentifier', $assetSourceIdentifier);
-        }
-
-        $activeAssetSourceIdentifier = $this->browserState->get('activeAssetSourceIdentifier');
-        if (!isset($this->assetSources[$activeAssetSourceIdentifier])) {
-            $assetSourceIdentifiers = array_keys($this->assetSources);
-            $activeAssetSourceIdentifier = reset($assetSourceIdentifiers);
-        }
-        $activeAssetSource = $this->assetSources[$activeAssetSourceIdentifier];
-
         // Unset active tag if it isn't available in the active asset collection
         if ($this->browserState->get('activeTag') && $activeAssetCollection !== null && !$activeAssetCollection->getTags()->contains($this->browserState->get('activeTag'))) {
             $this->browserState->set('activeTag', null);
             $this->view->assign('activeTag', null);
+        }
+
+        if (!$this->browserState->get('activeTag') && $this->browserState->get('tagMode') === self::TAG_GIVEN) {
+            $this->browserState->set('tagMode', self::TAG_ALL);
         }
 
         switch ($this->browserState->get('sortBy')) {
@@ -287,10 +282,6 @@ class AssetController extends ActionController
             default:
                 $this->assetRepository->setDefaultOrderings(['lastModified' => $this->browserState->get('sortDirection')]);
                 break;
-        }
-
-        if (!$this->browserState->get('activeTag') && $this->browserState->get('tagMode') === self::TAG_GIVEN) {
-            $this->browserState->set('tagMode', self::TAG_ALL);
         }
 
         $assetCollections = [];
