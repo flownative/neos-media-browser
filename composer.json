@@ -12,7 +12,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Flownative\\Media\\Browser": "Classes"
+            "Flownative\\Media\\Browser\\": "Classes"
         }
     },
     "extra": {
