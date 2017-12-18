@@ -6,6 +6,9 @@ privilegeTargets:
     'Flownative.Media.Browser:ManageAssets':
       matcher: 'method(Flownative\Media\Browser\Controller\(Asset|Image)Controller->(index|new|show|edit|update|initializeCreate|create|replaceAssetResource|updateAssetResource|initializeUpload|upload|tagAsset|delete|createTag|editTag|updateTag|deleteTag|addAssetToCollection|relatedNodes)Action())'
 
+    'Flownative.Media.Browser:AssetProxyService':
+      matcher: 'method(Flownative\Media\Browser\Controller\AssetProxyController->(index|import)Action())'
+
     'Flownative.Media.Browser:ManageAssetCollections':
       matcher: 'method(Flownative\Media\Browser\Controller\(Asset|Image)Controller->(createAssetCollection|editAssetCollection|updateAssetCollection|deleteAssetCollection)Action())'
 
@@ -17,6 +20,9 @@ roles:
     privileges:
       -
         privilegeTarget: 'Flownative.Media.Browser:ManageAssets'
+        permission: GRANT
+      -
+        privilegeTarget: 'Flownative.Media.Browser:AssetProxyService'
         permission: GRANT
 
   'Neos.Neos:LivePublisher':

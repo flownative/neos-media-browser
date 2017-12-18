@@ -12,26 +12,26 @@ namespace Flownative\Media\Browser\AssetSource;
  * source code.
  */
 
-interface AssetProxyQueryResultInterface extends \Countable, \Iterator, \ArrayAccess
+interface AssetProxyQueryResult extends \Countable, \Iterator, \ArrayAccess
 {
     /**
      * Returns a clone of the query object
      *
-     * @return AssetProxyQueryInterface
+     * @return AssetProxyQuery
      */
-    public function getQuery(): AssetProxyQueryInterface;
+    public function getQuery(): AssetProxyQuery;
 
     /**
      * Returns the first asset proxy in the result set
      *
-     * @return AssetProxyInterface|null
+     * @return AssetProxy|null
      */
-    public function getFirst(): ?AssetProxyInterface;
+    public function getFirst(): ?AssetProxy;
 
     /**
      * Returns an array with the asset proxies in the result set
      *
-     * @return AssetProxyInterface[]
+     * @return AssetProxy[]
      */
     public function toArray(): array;
 }

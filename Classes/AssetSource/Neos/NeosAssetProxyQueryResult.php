@@ -12,13 +12,23 @@ namespace Flownative\Media\Browser\AssetSource\Neos;
  * source code.
  */
 
-use Flownative\Media\Browser\AssetSource\AssetProxyInterface;
-use Flownative\Media\Browser\AssetSource\AssetProxyQueryInterface;
-use Flownative\Media\Browser\AssetSource\AssetProxyQueryResultInterface;
+use Flownative\Media\Browser\AssetSource\AssetProxy;
+use Flownative\Media\Browser\AssetSource\AssetProxyQuery;
+use Flownative\Media\Browser\AssetSource\AssetProxyQueryResult;
+use Neos\Flow\Annotations\Proxy;
 use Neos\Flow\Persistence\QueryResultInterface;
+use Neos\Media\Domain\Model\AssetInterface;
 
-final class NeosAssetProxyQueryResult implements AssetProxyQueryResultInterface
+/**
+ * @Proxy(false)
+ */
+final class NeosAssetProxyQueryResult implements AssetProxyQueryResult
 {
+    /**
+     * @var NeosAssetSource
+     */
+    private $assetSource;
+
     /**
      * @var QueryResultInterface
      */
@@ -31,26 +41,36 @@ final class NeosAssetProxyQueryResult implements AssetProxyQueryResultInterface
 
     /**
      * @param QueryResultInterface $flowPersistenceQueryResult
+     * @param NeosAssetSource $assetSource
      */
-    public function __construct(QueryResultInterface $flowPersistenceQueryResult)
+    public function __construct(QueryResultInterface $flowPersistenceQueryResult, NeosAssetSource $assetSource)
     {
         $this->flowPersistenceQueryResult = $flowPersistenceQueryResult;
+        $this->assetSource = $assetSource;
     }
 
     /**
-     * @return AssetProxyQueryInterface
+     * @return AssetProxyQuery
      */
-    public function getQuery(): AssetProxyQueryInterface
+    public function getQuery(): AssetProxyQuery
     {
         if ($this->query === null) {
-            $this->query = new NeosAssetProxyQuery($this->flowPersistenceQueryResult->getQuery());
+            $this->query = new NeosAssetProxyQuery($this->flowPersistenceQueryResult->getQuery(), $this->assetSource);
         }
         return $this->query;
     }
 
-    public function getFirst(): ?AssetProxyInterface
+    /**
+     * @return AssetProxy|null
+     */
+    public function getFirst(): ?AssetProxy
     {
-        return new NeosAssetProxy($this->flowPersistenceQueryResult->getFirst());
+        $asset = $this->flowPersistenceQueryResult->getFirst();
+        if ($asset instanceof AssetInterface) {
+            return new NeosAssetProxy($asset, $this->assetSource);
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -60,51 +80,86 @@ final class NeosAssetProxyQueryResult implements AssetProxyQueryResultInterface
     {
         $assetProxies = [];
         foreach ($this->flowPersistenceQueryResult->toArray() as $asset) {
-            $assetProxies[] = new NeosAssetProxy($asset);
+            $assetProxies[] = new NeosAssetProxy($asset, $this->assetSource);
         }
         return $assetProxies;
     }
 
-    public function current()
+    /**
+     * @return AssetProxy|null
+     */
+    public function current(): ?AssetProxy
     {
-        return new NeosAssetProxy($this->flowPersistenceQueryResult->current());
+        $asset = $this->flowPersistenceQueryResult->current();
+        if ($asset instanceof AssetInterface) {
+            return new NeosAssetProxy($asset, $this->assetSource);
+        } else {
+            return null;
+        }
     }
 
+    /**
+     * @return void
+     */
     public function next()
     {
         $this->flowPersistenceQueryResult->next();
     }
 
+    /**
+     * @return AssetProxy|null
+     */
     public function key()
     {
         return $this->flowPersistenceQueryResult->key();
     }
 
+    /**
+     * @return bool
+     */
     public function valid()
     {
         return $this->flowPersistenceQueryResult->valid();
     }
 
+    /**
+     * @return void
+     */
     public function rewind()
     {
         $this->flowPersistenceQueryResult->rewind();
     }
 
+    /**
+     * @param mixed $offset
+     * @return bool
+     */
     public function offsetExists($offset)
     {
         return $this->flowPersistenceQueryResult->offsetExists($offset);
     }
 
-    public function offsetGet($offset)
+    /**
+     * @param mixed $offset
+     * @return AssetProxy|mixed
+     */
+    public function offsetGet($offset): ?AssetProxy
     {
-        return new NeosAssetProxy($this->flowPersistenceQueryResult->offsetGet($offset));
+        return new NeosAssetProxy($this->flowPersistenceQueryResult->offsetGet($offset), $this->assetSource);
     }
 
+    /**
+     * @param mixed $offset
+     * @param mixed $value
+     */
     public function offsetSet($offset, $value)
     {
         throw new \RuntimeException('Unsupported operation: ' . __METHOD__, 1510060444556);
     }
 
+    /**
+     * @param mixed $offset
+     */
     public function offsetUnset($offset)
     {
         throw new \RuntimeException('Unsupported operation: ' . __METHOD__, 1510060467733);

@@ -14,8 +14,10 @@ namespace Flownative\Media\Browser\AssetSource;
 
 use Psr\Http\Message\UriInterface;
 
-interface AssetProxyInterface
+interface AssetProxy
 {
+    public function getAssetSource(): AssetSource;
+
     public function getIdentifier(): string;
 
     public function getLabel(): string;
@@ -35,4 +37,8 @@ interface AssetProxyInterface
     public function getThumbnailUri(): ?UriInterface;
 
     public function getPreviewUri(): ?UriInterface;
+
+    public function getOriginalUri(): ?UriInterface;
+
+    public function getLocalAssetIdentifier(): ?string;
 }

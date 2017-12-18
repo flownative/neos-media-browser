@@ -12,17 +12,31 @@ namespace Flownative\Media\Browser\AssetSource;
  * source code.
  */
 
-interface AssetSourceInterface
+interface AssetSource
 {
+    /**
+     * @param string $assetSourceIdentifier
+     * @param array $assetSourceOptions
+     */
+    public function __construct(string $assetSourceIdentifier, array $assetSourceOptions);
+
+    /**
+     * A unique string which identifies the concrete asset source.
+     * Must match /^[a-z][a-z0-9-]{0,62}[a-z]$/
+     *
+     * @return string
+     */
+    public function getIdentifier(): string;
+
     /**
      * @return string
      */
     public function getLabel(): string;
 
     /**
-     * @return AssetProxyRepositoryInterface
+     * @return AssetProxyRepository
      */
-    public function getAssetProxyRepository(): AssetProxyRepositoryInterface;
+    public function getAssetProxyRepository(): AssetProxyRepository;
 
     /**
      * @return bool

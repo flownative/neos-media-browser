@@ -13,7 +13,7 @@ namespace Flownative\Media\Browser\ViewHelpers\Controller;
 * source code.
 */
 
-use Flownative\Media\Browser\AssetSource\AssetProxyQueryResultInterface;
+use Flownative\Media\Browser\AssetSource\AssetProxyQueryResult;
 use Flownative\Media\Browser\AssetSource\AssetSourceConnectionException;
 use Neos\FluidAdaptor\Core\Widget\AbstractWidgetController;
 use Neos\Utility\Arrays;
@@ -24,7 +24,7 @@ use Neos\Utility\Arrays;
 class PaginateController extends AbstractWidgetController
 {
     /**
-     * @var AssetProxyQueryResultInterface
+     * @var AssetProxyQueryResult
      */
     protected $assetProxyQueryResult;
 

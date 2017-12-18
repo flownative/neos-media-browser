@@ -12,31 +12,70 @@ namespace Flownative\Media\Browser\AssetSource\Neos;
  * source code.
  */
 
-use Flownative\Media\Browser\AssetSource\AssetProxyRepositoryInterface;
-use Flownative\Media\Browser\AssetSource\AssetSourceInterface;
+use Flownative\Media\Browser\AssetSource\AssetProxyRepository;
+use Flownative\Media\Browser\AssetSource\AssetSource;
+use Neos\Flow\Annotations\Proxy;
 
-final class NeosAssetSource implements AssetSourceInterface
+/**
+ * @Proxy(false)
+ */
+final class NeosAssetSource implements AssetSource
 {
+    /**
+     * @var string
+     */
+    private $assetSourceIdentifier;
+
     /**
      * @var NeosAssetProxyRepository
      */
-    protected $assetBrowser;
+    private $assetProxyRepository;
 
+    /**
+     * @param string $assetSourceIdentifier
+     * @param array $assetSourceOptions
+     */
+    public function __construct(string $assetSourceIdentifier, array $assetSourceOptions)
+    {
+        if (preg_match('/^[a-z][a-z0-9-]{0,62}[a-z]$/', $assetSourceIdentifier) !== 1) {
+            throw new \InvalidArgumentException(sprintf('Invalid asset source identifier "%s". The identifier must match /^[a-z][a-z0-9-]{0,62}[a-z]$/', $assetSourceIdentifier), 1513329665386);
+        }
+        $this->assetSourceIdentifier = $assetSourceIdentifier;
+
+        foreach ($assetSourceOptions as $optionName => $optionValue) {
+            switch ($optionName) {
+                default:
+                    throw new \InvalidArgumentException(sprintf('Unknown asset source option "%s" specified for Neos asset source "%s". Please check your settings.', $optionName,$assetSourceIdentifier), 1513327774584);
+            }
+        }
+    }
+
+    /**
+     * @return string
+     */
+    public function getIdentifier(): string
+    {
+        return $this->assetSourceIdentifier;
+    }
+
+    /**
+     * @return string
+     */
     public function getLabel(): string
     {
         return 'Neos';
     }
 
     /**
-     * @return AssetProxyRepositoryInterface
+     * @return AssetProxyRepository
      */
-    public function getAssetProxyRepository(): AssetProxyRepositoryInterface
+    public function getAssetProxyRepository(): AssetProxyRepository
     {
-        if ($this->assetBrowser === null) {
-            $this->assetBrowser = new NeosAssetProxyRepository();
+        if ($this->assetProxyRepository === null) {
+            $this->assetProxyRepository = new NeosAssetProxyRepository($this);
         }
 
-        return $this->assetBrowser;
+        return $this->assetProxyRepository;
     }
 
     /**

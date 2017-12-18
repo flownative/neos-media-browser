@@ -12,7 +12,7 @@ namespace Flownative\Media\Browser\AssetSource;
  * source code.
  */
 
-interface AssetProxyQueryInterface
+interface AssetProxyQuery
 {
     /**
      * @param int $offset
@@ -45,9 +45,9 @@ interface AssetProxyQueryInterface
     public function getSearchTerm();
 
     /**
-     * @return AssetProxyQueryResultInterface
+     * @return AssetProxyQueryResult
      */
-    public function execute(): AssetProxyQueryResultInterface;
+    public function execute(): AssetProxyQueryResult;
 
     /**
      * @return int

@@ -13,9 +13,9 @@ namespace Flownative\Media\Browser\AssetSource\Neos;
  */
 
 use Flownative\Media\Browser\AssetSource\AssetNotFoundException;
-use Flownative\Media\Browser\AssetSource\AssetProxyInterface;
-use Flownative\Media\Browser\AssetSource\AssetProxyQueryResultInterface;
-use Flownative\Media\Browser\AssetSource\AssetProxyRepositoryInterface;
+use Flownative\Media\Browser\AssetSource\AssetProxy;
+use Flownative\Media\Browser\AssetSource\AssetProxyQueryResult;
+use Flownative\Media\Browser\AssetSource\AssetProxyRepository;
 use Flownative\Media\Browser\AssetSource\AssetTypeFilter;
 use Neos\Flow\Annotations\Inject;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
@@ -27,13 +27,18 @@ use Neos\Media\Domain\Repository\DocumentRepository;
 use Neos\Media\Domain\Repository\ImageRepository;
 use Neos\Media\Domain\Repository\VideoRepository;
 
-final class NeosAssetProxyRepository implements AssetProxyRepositoryInterface
+final class NeosAssetProxyRepository implements AssetProxyRepository
 {
     /**
      * @Inject
      * @var ObjectManagerInterface
      */
     protected $objectManager;
+
+    /**
+     * @var NeosAssetSource
+     */
+    private $assetSource;
 
     /**
      * @var AssetRepository
@@ -57,6 +62,14 @@ final class NeosAssetProxyRepository implements AssetProxyRepositoryInterface
     ];
 
     /**
+     * @param NeosAssetSource $assetSource
+     */
+    public function __construct(NeosAssetSource $assetSource)
+    {
+        $this->assetSource = $assetSource;
+    }
+
+    /**
      * @return void
      */
     public function initializeObject(): void
@@ -66,16 +79,16 @@ final class NeosAssetProxyRepository implements AssetProxyRepositoryInterface
 
     /**
      * @param string $identifier
-     * @return AssetProxyInterface
+     * @return AssetProxy
      * @throws AssetNotFoundException
      */
-    public function getAssetProxy(string $identifier): AssetProxyInterface
+    public function getAssetProxy(string $identifier): AssetProxy
     {
         $asset = $this->assetRepository->findByIdentifier($identifier);
         if ($asset === null || !$asset instanceof AssetInterface) {
             throw new AssetNotFoundException('The specified asset was not found.', 1509632861103);
         }
-        return new NeosAssetProxy($asset);
+        return new NeosAssetProxy($asset, $this->assetSource);
     }
 
     /**
@@ -88,37 +101,37 @@ final class NeosAssetProxyRepository implements AssetProxyRepositoryInterface
     }
 
     /**
-     * @return AssetProxyQueryResultInterface
+     * @return AssetProxyQueryResult
      */
-    public function findAll(): AssetProxyQueryResultInterface
+    public function findAll(): AssetProxyQueryResult
     {
-        return new NeosAssetProxyQueryResult($this->assetRepository->findAll());
+        return new NeosAssetProxyQueryResult($this->assetRepository->findAll(), $this->assetSource);
     }
 
     /**
      * @param string $searchTerm
-     * @return AssetProxyQueryResultInterface
+     * @return AssetProxyQueryResult
      */
-    public function findBySearchTerm(string $searchTerm): AssetProxyQueryResultInterface
+    public function findBySearchTerm(string $searchTerm): AssetProxyQueryResult
     {
-        return new NeosAssetProxyQueryResult($this->assetRepository->findBySearchTermOrTags($searchTerm, []));
+        return new NeosAssetProxyQueryResult($this->assetRepository->findBySearchTermOrTags($searchTerm, []), $this->assetSource);
     }
 
     /**
      * @param Tag $tag
-     * @return AssetProxyQueryResultInterface
+     * @return AssetProxyQueryResult
      */
-    public function findByTag(Tag $tag): AssetProxyQueryResultInterface
+    public function findByTag(Tag $tag): AssetProxyQueryResult
     {
-        return new NeosAssetProxyQueryResult($this->assetRepository->findByTag($tag));
+        return new NeosAssetProxyQueryResult($this->assetRepository->findByTag($tag), $this->assetSource);
     }
 
     /**
-     * @return AssetProxyQueryResultInterface
+     * @return AssetProxyQueryResult
      */
-    public function findUntagged(): AssetProxyQueryResultInterface
+    public function findUntagged(): AssetProxyQueryResult
     {
-        return new NeosAssetProxyQueryResult($this->assetRepository->findUntagged());
+        return new NeosAssetProxyQueryResult($this->assetRepository->findUntagged(), $this->assetSource);
     }
 
     /**

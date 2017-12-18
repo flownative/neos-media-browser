@@ -14,15 +14,15 @@ namespace Flownative\Media\Browser\AssetSource;
 
 use Neos\Media\Domain\Model\Tag;
 
-interface AssetProxyRepositoryInterface
+interface AssetProxyRepository
 {
     /**
      * @param string $identifier
-     * @return AssetProxyInterface
+     * @return AssetProxy
      * @throws AssetNotFoundException
      * @throws AssetSourceConnectionException
      */
-    public function getAssetProxy(string $identifier): AssetProxyInterface;
+    public function getAssetProxy(string $identifier): AssetProxy;
 
     /**
      * @param AssetTypeFilter $assetType
@@ -30,27 +30,27 @@ interface AssetProxyRepositoryInterface
     public function filterByType(AssetTypeFilter $assetType = null): void;
 
     /**
-     * @return AssetProxyQueryResultInterface
+     * @return AssetProxyQueryResult
      * @throws AssetSourceConnectionException
      */
-    public function findAll(): AssetProxyQueryResultInterface;
+    public function findAll(): AssetProxyQueryResult;
 
     /**
      * @param string $searchTerm
-     * @return AssetProxyQueryResultInterface
+     * @return AssetProxyQueryResult
      */
-    public function findBySearchTerm(string $searchTerm): AssetProxyQueryResultInterface;
+    public function findBySearchTerm(string $searchTerm): AssetProxyQueryResult;
 
     /**
      * @param Tag $tag
-     * @return AssetProxyQueryResultInterface
+     * @return AssetProxyQueryResult
      */
-    public function findByTag(Tag $tag): AssetProxyQueryResultInterface;
+    public function findByTag(Tag $tag): AssetProxyQueryResult;
 
     /**
-     * @return AssetProxyQueryResultInterface
+     * @return AssetProxyQueryResult
      */
-    public function findUntagged(): AssetProxyQueryResultInterface;
+    public function findUntagged(): AssetProxyQueryResult;
 
     /**
      * Count all assets, regardless of tag or collection

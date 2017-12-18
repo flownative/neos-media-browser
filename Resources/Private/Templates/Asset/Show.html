@@ -60,7 +60,7 @@
 <f:section name="ContentImage">
     <label>{neos:backend.translate(id: 'preview', package: 'Flownative.Media.Browser')}</label>
     <div class="neos-preview-image">
-        <a href="#" target="_blank">
+        <a href="{assetProxy.originalUri}" target="_blank">
             <img src="{assetProxy.previewUri}" class="img-polaroid" alt="{assetProxy.label}"/>
         </a>
     </div>

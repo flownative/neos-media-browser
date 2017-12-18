@@ -13,7 +13,7 @@ namespace Flownative\Media\Browser\ViewHelpers;
 * source code.
 */
 
-use Flownative\Media\Browser\AssetSource\AssetProxyQueryResultInterface;
+use Flownative\Media\Browser\AssetSource\AssetProxyQueryResult;
 use Flownative\Media\Browser\ViewHelpers\Controller\PaginateController;
 use Neos\Flow\Annotations\Inject;
 use Neos\FluidAdaptor\Core\Widget\AbstractWidgetViewHelper;
@@ -41,12 +41,12 @@ class PaginateViewHelper extends AbstractWidgetViewHelper
     /**
      * Render this view helper
      *
-     * @param AssetProxyQueryResultInterface $queryResult
+     * @param AssetProxyQueryResult $queryResult
      * @param string $as
      * @param array $configuration
      * @return string
      */
-    public function render(AssetProxyQueryResultInterface $queryResult, $as, array $configuration = array('itemsPerPage' => 10, 'insertAbove' => false, 'insertBelow' => true, 'maximumNumberOfLinks' => 99))
+    public function render(AssetProxyQueryResult $queryResult, $as, array $configuration = array('itemsPerPage' => 10, 'insertAbove' => false, 'insertBelow' => true, 'maximumNumberOfLinks' => 99))
     {
         $response = $this->initiateSubRequest();
         return $response->getContent();

@@ -5,7 +5,7 @@
 <f:section name="Title">Edit view</f:section>
 
 <f:section name="Content">
-    <f:form method="post" action="update" object="{assetProxy.asset}" objectName="asset">
+    <f:form method="post" action="update" object="{assetProxy.asset}" objectName="assetProxy">
         <div class="neos-row-fluid">
             <div class="neos-span6 neos-image-inputs">
                 <fieldset>
@@ -59,7 +59,7 @@
                             </tr>
                             <tr>
                                 <th>{neos:backend.translate(id: 'metadata.identifier', package: 'Flownative.Media.Browser')}</th>
-                                <td><span class="neos-label">{asset.identifier}</span></td>
+                                <td><span class="neos-label">{assetProxy.localAssetIdentifier}</span></td>
                             </tr>
                         </tbody>
                     </table>
@@ -89,7 +89,7 @@
             </f:if>
             <f:form.submit id="save" class="neos-button neos-button-primary" value="{neos:backend.translate(id: 'saveEditing', package: 'Flownative.Media.Browser')}" />
         </div>
-        <div class="neos-hide" id="asset-{assetProxy.asset -> f:format.identifier()}">
+        <div class="neos-hide" id="asset-{assetProxy.localAssetIdentifier}">
             <div class="neos-modal-centered">
                 <div class="neos-modal-content">
                     <div class="neos-modal-header">
@@ -123,7 +123,7 @@
 <f:section name="ContentImage">
     <label>{neos:backend.translate(id: 'preview', package: 'Flownative.Media.Browser')}</label>
     <div class="neos-preview-image">
-        <a href="#" target="_blank">
+        <a href="{assetProxy.originalUri}" target="_blank">
             <img src="{assetProxy.previewUri}" class="img-polaroid" alt="{assetProxy.label}"/>
         </a>
     </div>

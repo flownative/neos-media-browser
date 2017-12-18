@@ -13,7 +13,7 @@ namespace Flownative\Media\Browser\ViewHelpers;
 * source code.
 */
 
-use Flownative\Media\Browser\AssetSource\AssetProxyInterface;
+use Flownative\Media\Browser\AssetSource\AssetProxy;
 use Neos\FluidAdaptor\Core\ViewHelper\AbstractTagBasedViewHelper;
 
 /**
@@ -50,12 +50,12 @@ class ThumbnailViewHelper extends AbstractTagBasedViewHelper
     /**
      * Renders an HTML img tag with a thumbnail or preview image, created from a given asset proxy.
      *
-     * @param AssetProxyInterface $assetProxy The asset to be rendered as a thumbnail
+     * @param AssetProxy $assetProxy The asset to be rendered as a thumbnail
      * @param integer $width Desired width of the thumbnail
      * @param integer $height Desired height of the thumbnail
      * @return string an <img...> html tag
      */
-    public function render(AssetProxyInterface $assetProxy = null, $width = null, $height = null)
+    public function render(AssetProxy $assetProxy = null, $width = null, $height = null)
     {
         if ($width === null || $height === null) {
             $width = 250;

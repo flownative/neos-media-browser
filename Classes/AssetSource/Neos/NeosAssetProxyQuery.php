@@ -12,11 +12,11 @@ namespace Flownative\Media\Browser\AssetSource\Neos;
  * source code.
  */
 
-use Flownative\Media\Browser\AssetSource\AssetProxyQueryInterface;
-use Flownative\Media\Browser\AssetSource\AssetProxyQueryResultInterface;
+use Flownative\Media\Browser\AssetSource\AssetProxyQuery;
+use Flownative\Media\Browser\AssetSource\AssetProxyQueryResult;
 use Neos\Flow\Persistence\QueryInterface;
 
-final class NeosAssetProxyQuery implements AssetProxyQueryInterface
+final class NeosAssetProxyQuery implements AssetProxyQuery
 {
     /**
      * @var QueryInterface
@@ -24,13 +24,20 @@ final class NeosAssetProxyQuery implements AssetProxyQueryInterface
     private $flowPersistenceQuery;
 
     /**
+     * @var NeosAssetSource
+     */
+    private $assetSource;
+
+    /**
      * NeosAssetProxyQuery constructor.
      *
      * @param QueryInterface $flowPersistenceQuery
+     * @param NeosAssetSource $assetSource
      */
-    public function __construct(QueryInterface $flowPersistenceQuery)
+    public function __construct(QueryInterface $flowPersistenceQuery, NeosAssetSource $assetSource)
     {
         $this->flowPersistenceQuery = $flowPersistenceQuery;
+        $this->assetSource = $assetSource;
     }
 
     /**
@@ -66,18 +73,23 @@ final class NeosAssetProxyQuery implements AssetProxyQueryInterface
     }
 
     /**
-     * @return AssetProxyQueryResultInterface
+     * @return AssetProxyQueryResult
      */
-    public function execute(): AssetProxyQueryResultInterface
+    public function execute(): AssetProxyQueryResult
     {
-        return new NeosAssetProxyQueryResult($this->flowPersistenceQuery->execute());
+        return new NeosAssetProxyQueryResult($this->flowPersistenceQuery->execute(), $this->assetSource);
     }
 
+    /**
+     * @param string $searchTerm
+     */
     public function setSearchTerm(string $searchTerm)
     {
-
     }
 
+    /**
+     * @return string|void
+     */
     public function getSearchTerm()
     {
     }

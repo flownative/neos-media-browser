@@ -6,4 +6,24 @@
     '@controller': 'Image'
     '@format': 'html'
     '@action': 'index'
-  appendExceedingArguments: TRUE
+  appendExceedingArguments: true
+
+-
+  name: 'Asset Browser (Flownative)'
+  uriPattern: 'neos/media/browser/assets(/{@action}).{@format}'
+  defaults:
+    '@package': 'Flownative.Media.Browser'
+    '@controller': 'Asset'
+    '@format': 'html'
+    '@action': 'index'
+  appendExceedingArguments: true
+
+-
+  name: 'Asset Proxy Service (Flownative)'
+  uriPattern: 'neos/media/browser/asset-proxies(/{@action}).{@format}'
+  defaults:
+    '@package': 'Flownative.Media.Browser'
+    '@controller': 'AssetProxy'
+    '@format': 'json'
+    '@action': 'index'
+  appendExceedingArguments: true

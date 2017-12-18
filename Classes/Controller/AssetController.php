@@ -16,7 +16,7 @@ use Doctrine\Common\Persistence\Proxy as DoctrineProxy;
 use Doctrine\ORM\EntityNotFoundException;
 use Flownative\Media\Browser\AssetSource\AssetNotFoundException;
 use Flownative\Media\Browser\AssetSource\AssetSourceConnectionException;
-use Flownative\Media\Browser\AssetSource\AssetSourceInterface;
+use Flownative\Media\Browser\AssetSource\AssetSource;
 use Flownative\Media\Browser\AssetSource\AssetTypeFilter;
 use Flownative\Media\Browser\Domain\Session\BrowserState;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
@@ -158,7 +158,7 @@ class AssetController extends ActionController
     protected $assetSourcesConfiguration;
 
     /**
-     * @var AssetSourceInterface[]
+     * @var AssetSource[]
      */
     protected $assetSources = [];
 
@@ -168,6 +168,7 @@ class AssetController extends ActionController
     public function initializeObject()
     {
         $domain = $this->domainRepository->findOneByActiveRequest();
+
         // Set active asset collection to the current site's asset collection, if it has one, on the first view if a matching domain is found
         if ($domain !== null && !$this->browserState->get('activeAssetCollection') && $this->browserState->get('automaticAssetCollectionSelection') !== true && $domain->getSite()->getAssetCollection() !== null) {
             $this->browserState->set('activeAssetCollection', $domain->getSite()->getAssetCollection());
@@ -175,7 +176,7 @@ class AssetController extends ActionController
         }
 
         foreach ($this->assetSourcesConfiguration as $assetSourceIdentifier => $assetSourceConfiguration) {
-            $this->assetSources[$assetSourceIdentifier] = new $assetSourceConfiguration['assetSource'];
+            $this->assetSources[$assetSourceIdentifier] = new $assetSourceConfiguration['assetSource']($assetSourceIdentifier, $assetSourceConfiguration['assetSourceOptions']);
         }
     }
 
@@ -429,6 +430,7 @@ class AssetController extends ActionController
 
     /**
      * @return void
+     * @throws \Neos\Flow\Mvc\Exception\NoSuchArgumentException
      */
     protected function initializeUpdateAction()
     {
@@ -442,6 +444,7 @@ class AssetController extends ActionController
      *
      * @param Asset $asset
      * @return void
+     * @throws StopActionException
      */
     public function updateAction(Asset $asset)
     {
@@ -454,6 +457,7 @@ class AssetController extends ActionController
      * Initialization for createAction
      *
      * @return void
+     * @throws \Neos\Flow\Mvc\Exception\NoSuchArgumentException
      */
     protected function initializeCreateAction()
     {
@@ -468,6 +472,7 @@ class AssetController extends ActionController
      *
      * @param Asset $asset
      * @return void
+     * @throws StopActionException
      */
     public function createAction(Asset $asset)
     {
@@ -482,6 +487,7 @@ class AssetController extends ActionController
      * Initialization for uploadAction
      *
      * @return void
+     * @throws \Neos\Flow\Mvc\Exception\NoSuchArgumentException
      */
     protected function initializeUploadAction()
     {
@@ -496,6 +502,7 @@ class AssetController extends ActionController
      *
      * @param Asset $asset
      * @return string
+     * @throws \Neos\Flow\Persistence\Exception\IllegalObjectTypeException
      */
     public function uploadAction(Asset $asset)
     {

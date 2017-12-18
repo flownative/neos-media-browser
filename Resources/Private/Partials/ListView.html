@@ -74,7 +74,7 @@
             'deleteAssetLabel': '{neos:backend.translate(id: \'deleteAsset\', package: \'Flownative.Media.Browser\')}'
         }">
             <f:for each="{assetProxies}" as="assetProxy" iteration="iterator">
-                <tr class="asset draggable-asset{f:if(condition: '{assetProxy.tags -> f:count()} === 0', then: ' neos-media-untagged')}" data-asset-identifier="{assetProxy.identifier}">
+                <tr class="asset draggable-asset{f:if(condition: '{assetProxy.tags -> f:count()} === 0', then: ' neos-media-untagged')}" data-asset-identifier="{assetProxy.localAssetIdentifier}">
                     <td>
                         <div class="neos-list-thumbnail"
                              data-neos-toggle="popover"
@@ -101,8 +101,8 @@
                         </f:for>
                     </td>
                     <td class="neos-action">
-                        <div class="neos-dropdown" id="neos-asset-actionmenu-{asset -> f:format.identifier()}">
-                            <a class="dropdown-toggle neos-button neos-button-mini" href="#" data-neos-toggle="dropdown" data-target="#neos-asset-actionmenu-{assetProxy.identifier}">
+                        <div class="neos-dropdown" id="neos-asset-actionmenu-{assetProxy.localAssetIdentifier}">
+                            <a class="dropdown-toggle neos-button neos-button-mini" href="#" data-neos-toggle="dropdown" data-target="#neos-asset-actionmenu-{assetProxy.localAssetIdentifier}">
                                 <i class="icon-ellipsis-horizontal"></i>
                             </a>
                             <div class="neos-dropdown-menu-list neos-pull-right" role="menu">

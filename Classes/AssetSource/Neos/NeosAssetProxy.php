@@ -12,10 +12,12 @@ namespace Flownative\Media\Browser\AssetSource\Neos;
  * source code.
  */
 
-use Flownative\Media\Browser\AssetSource\AssetProxyInterface;
+use Flownative\Media\Browser\AssetSource\AssetProxy;
+use Flownative\Media\Browser\AssetSource\AssetSource;
 use Neos\Flow\Annotations\Inject;
 use Neos\Flow\Http\Uri;
 use Neos\Flow\Persistence\PersistenceManagerInterface;
+use Neos\Flow\ResourceManagement\ResourceManager;
 use Neos\Media\Domain\Model\Asset;
 use Neos\Media\Domain\Model\AssetInterface;
 use Neos\Media\Domain\Model\ImageInterface;
@@ -25,8 +27,13 @@ use Neos\Media\Exception\AssetServiceException;
 use Neos\Media\Exception\ThumbnailServiceException;
 use Psr\Http\Message\UriInterface;
 
-final class NeosAssetProxy implements AssetProxyInterface
+final class NeosAssetProxy implements AssetProxy
 {
+    /**
+     * @var NeosAssetSource
+     */
+    private $assetSource;
+
     /**
      * @var Asset
      */
@@ -51,14 +58,30 @@ final class NeosAssetProxy implements AssetProxyInterface
     protected $persistenceManager;
 
     /**
-     * @param AssetInterface $asset
+     * @Inject()
+     * @var ResourceManager
      */
-    public function __construct(AssetInterface $asset)
+    protected $resourceManager;
+
+    /**
+     * @param AssetInterface $asset
+     * @param NeosAssetSource $assetSource
+     */
+    public function __construct(AssetInterface $asset, NeosAssetSource $assetSource)
     {
         if (!$asset instanceof Asset) {
             throw new \RuntimeException(sprintf('%s currently only support the concrete Asset implementation because several methods are not part of the AssetInterface yet.', __CLASS__), 1509635540408);
         }
         $this->asset = $asset;
+        $this->assetSource = $assetSource;
+    }
+
+    /**
+     * @return AssetSource
+     */
+    public function getAssetSource(): AssetSource
+    {
+        return $this->assetSource;
     }
 
     /**
@@ -164,5 +187,22 @@ final class NeosAssetProxy implements AssetProxyInterface
         $thumbnailConfiguration = $this->thumbnailService->getThumbnailConfigurationForPreset('Flownative.Media.Browser:Preview');
         $thumbnailData = $this->assetService->getThumbnailUriAndSizeForAsset($this->asset, $thumbnailConfiguration);
         return isset($thumbnailData['src']) ? new Uri($thumbnailData['src']) : null;
+    }
+
+    /**
+     * @return null|UriInterface
+     */
+    public function getOriginalUri(): ?UriInterface
+    {
+        $uriString = $this->resourceManager->getPublicPersistentResourceUri($this->asset->getResource());
+        return $uriString !== false ? new Uri($uriString) : null;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLocalAssetIdentifier(): ?string
+    {
+        return $this->persistenceManager->getIdentifierByObject($this->asset);
     }
 }
