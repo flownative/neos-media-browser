@@ -13,7 +13,7 @@
         }">
             <f:for each="{paginatedAssetProxies}" as="assetProxy">
                 <li class="asset">
-                    <f:if condition="{activeAssetSource.readOnly}">
+                    <f:if condition="!{activeAssetSource.readOnly}">
                         <f:then>
                             <f:link.action action="edit" class="neos-thumbnail" arguments="{assetSourceIdentifier: activeAssetSourceIdentifier, assetProxyIdentifier: assetProxy.identifier}" data="{asset-identifier: '{assetProxy.identifier}', local-asset-identifier: '{assetProxy.localAssetIdentifier}', asset-source-identifier: '{assetProxy.assetSource.identifier}'}">
                                 <div class="neos-img-container draggable-asset {f:if(condition: '{assetProxy.asset.tags -> f:count()} === 0', then: ' neos-media-untagged')}">
