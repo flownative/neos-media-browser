@@ -14,8 +14,6 @@ namespace Flownative\Media\Browser\Domain\Model;
 
 use Neos\Flow\Annotations\Entity;
 use Neos\Flow\Annotations\Identity;
-use Neos\Media\Domain\Model\Asset;
-use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @Entity
@@ -35,10 +33,9 @@ final class ImportedAsset
     protected $remoteAssetIdentifier;
 
     /**
-     * @ORM\OneToOne(orphanRemoval = true, cascade={"all"})
-     * @var Asset
+     * @var string
      */
-    protected $localAsset;
+    protected $localAssetIdentifier;
 
     /**
      * @var \DateTimeImmutable
@@ -48,18 +45,18 @@ final class ImportedAsset
     /**
      * @param string $assetSourceIdentifier
      * @param string $remoteAssetIdentifier
-     * @param Asset $localAsset
+     * @param string $localAsset
      * @param \DateTimeImmutable $importedAt
      */
     public function __construct(
         string $assetSourceIdentifier,
         string $remoteAssetIdentifier,
-        Asset $localAsset,
+        string $localAsset,
         \DateTimeImmutable $importedAt
     ) {
         $this->assetSourceIdentifier = $assetSourceIdentifier;
         $this->remoteAssetIdentifier = $remoteAssetIdentifier;
-        $this->localAsset = $localAsset;
+        $this->localAssetIdentifier = $localAsset;
         $this->importedAt = $importedAt;
     }
 
@@ -96,19 +93,19 @@ final class ImportedAsset
     }
 
     /**
-     * @return Asset
+     * @return string
      */
-    public function getLocalAsset(): Asset
+    public function getLocalAssetIdentifier(): string
     {
-        return $this->localAsset;
+        return $this->localAssetIdentifier;
     }
 
     /**
-     * @param Asset $localAsset
+     * @param string $localAssetIdentifier
      */
-    public function setLocalAsset(Asset $localAsset): void
+    public function setLocalAssetIdentifier(string $localAssetIdentifier): void
     {
-        $this->localAsset = $localAsset;
+        $this->localAssetIdentifier = $localAssetIdentifier;
     }
 
     /**

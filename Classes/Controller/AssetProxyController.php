@@ -115,23 +115,20 @@ class AssetProxyController extends ActionController
             }
 
             $image = new Image($assetResource);
-            $imageVariant = new ImageVariant($image);
-
             $this->assetRepository->add($image);
-            $this->assetRepository->add($imageVariant);
+            $localAssetIdentifier = $this->persistenceManager->getIdentifierByObject($image);
 
             $importedAsset = new ImportedAsset(
                 $assetSourceIdentifier,
                 $assetIdentifier,
-                $imageVariant,
+                $localAssetIdentifier,
                 new \DateTimeImmutable()
             );
             $this->importedAssetRepository->add($importedAsset);
         }
 
-        $localAssetIdentifier = $this->persistenceManager->getIdentifierByObject($importedAsset->getLocalAsset());
         $assetProxy = new \stdClass();
-        $assetProxy->localAssetIdentifier = $localAssetIdentifier;
+        $assetProxy->localAssetIdentifier = $importedAsset->getLocalAssetIdentifier();
 
         return json_encode($assetProxy);
     }
