@@ -67,8 +67,9 @@ class AssetProxyController extends ActionController
     public function initializeObject()
     {
         foreach ($this->assetSourcesConfiguration as $assetSourceIdentifier => $assetSourceConfiguration) {
-            $this->assetSources[$assetSourceIdentifier] = new $assetSourceConfiguration['assetSource']($assetSourceIdentifier,
-                $assetSourceConfiguration['assetSourceOptions']);
+            if (is_array($assetSourceConfiguration)) {
+                $this->assetSources[$assetSourceIdentifier] = new $assetSourceConfiguration['assetSource']($assetSourceIdentifier, $assetSourceConfiguration['assetSourceOptions']);
+            }
         }
     }
 
