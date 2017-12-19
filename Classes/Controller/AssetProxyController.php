@@ -24,8 +24,8 @@ use Neos\Flow\Mvc\Controller\ActionController;
 use Neos\Flow\ResourceManagement\Exception;
 use Neos\Flow\ResourceManagement\ResourceManager;
 use Neos\Media\Domain\Model\Image;
-use Neos\Media\Domain\Model\ImageVariant;
 use Neos\Media\Domain\Repository\AssetRepository;
+use Neos\Media\Domain\Strategy\AssetModelMappingStrategyInterface;
 
 /**
  * @Flow\Scope("singleton")
@@ -60,6 +60,12 @@ class AssetProxyController extends ActionController
      * @var ImportedAssetRepository
      */
     protected $importedAssetRepository;
+
+    /**
+     * @Flow\Inject
+     * @var AssetModelMappingStrategyInterface
+     */
+    protected $assetModelMappingStrategy;
 
     /**
      * @return void
@@ -114,9 +120,11 @@ class AssetProxyController extends ActionController
                 return '';
             }
 
-            $image = new Image($assetResource);
-            $this->assetRepository->add($image);
-            $localAssetIdentifier = $this->persistenceManager->getIdentifierByObject($image);
+            $assetModelClassName = $this->assetModelMappingStrategy->map($assetResource);
+
+            $asset = new $assetModelClassName($assetResource);
+            $this->assetRepository->add($asset);
+            $localAssetIdentifier = $this->persistenceManager->getIdentifierByObject($asset);
 
             $importedAsset = new ImportedAsset(
                 $assetSourceIdentifier,
