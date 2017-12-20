@@ -12,7 +12,11 @@ namespace Flownative\Media\Browser\Controller;
  * source code.
  */
 
+use Flownative\Media\Browser\AssetSource\MediaAssetSourceAware;
+use Flownative\Media\Browser\Domain\Model\ImportedAsset;
+use Flownative\Media\Browser\Domain\Repository\ImportedAssetRepository;
 use Neos\Flow\Annotations as Flow;
+use Neos\Media\Domain\Model\Asset;
 use Neos\Media\Domain\Repository\ImageRepository;
 
 /**
@@ -27,16 +31,31 @@ class ImageController extends AssetController
     protected $assetRepository;
 
     /**
+     * @Flow\Inject
+     * @var ImportedAssetRepository
+     */
+    protected $importedAssetRepository;
+
+    /**
      * @param string $assetSourceIdentifier
      * @param string $assetProxyIdentifier
-     * @return void
+     * @param Asset $asset
+     * @return void|string
+     * @throws \Neos\Flow\Mvc\Exception\StopActionException
+     * @throws \Neos\Flow\Mvc\Exception\UnsupportedRequestTypeException
      */
-    public function editAction(string $assetSourceIdentifier, string $assetProxyIdentifier)
+    public function editAction(string $assetSourceIdentifier = null, string $assetProxyIdentifier = null, Asset $asset = null)
     {
-//        if ($assetProxy instanceof NeosAssetProxy && $assetProxy->getAsset() instanceof ImageVariant) {
-// FIXME
-//            $assetProxy = $assetProxy->getAsset()->getOriginalAsset();
-//        }
-        parent::editAction($assetSourceIdentifier, $assetProxyIdentifier);
+        if ($assetSourceIdentifier !== null && $assetProxyIdentifier !== null) {
+            parent::editAction($assetSourceIdentifier, $assetProxyIdentifier);
+            return;
+        } elseif ($asset instanceof MediaAssetSourceAware) {
+            /** @var ImportedAsset $importedAsset */
+            $importedAsset = $this->importedAssetRepository->findOneByLocalAssetIdentifier($asset->getIdentifier());
+            parent::editAction($asset->getAssetSourceIdentifier(), $importedAsset ? $importedAsset->getRemoteAssetIdentifier() : $asset->getIdentifier());
+            return;
+        }
+
+        $this->response->setStatus(400, 'Invalid arguments');
     }
 }

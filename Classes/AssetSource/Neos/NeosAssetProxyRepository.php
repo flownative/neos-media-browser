@@ -19,6 +19,7 @@ use Flownative\Media\Browser\AssetSource\AssetProxyRepository;
 use Flownative\Media\Browser\AssetSource\AssetTypeFilter;
 use Neos\Flow\Annotations\Inject;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
+use Neos\Flow\Persistence\Exception\InvalidQueryException;
 use Neos\Media\Domain\Model\AssetInterface;
 use Neos\Media\Domain\Model\Tag;
 use Neos\Media\Domain\Repository\AssetRepository;
@@ -105,7 +106,17 @@ final class NeosAssetProxyRepository implements AssetProxyRepository
      */
     public function findAll(): AssetProxyQueryResult
     {
-        return new NeosAssetProxyQueryResult($this->assetRepository->findAll(), $this->assetSource);
+        $queryResult = $this->assetRepository->findAll();
+        $query = $queryResult->getQuery();
+        $constraint = $query->getConstraint();
+        $query->matching(
+            $query->logicalAnd(
+                $constraint,
+                $query->equals('assetSourceIdentifier', 'neos')
+            )
+        );
+
+        return new NeosAssetProxyQueryResult($query->execute(), $this->assetSource);
     }
 
     /**
@@ -114,7 +125,11 @@ final class NeosAssetProxyRepository implements AssetProxyRepository
      */
     public function findBySearchTerm(string $searchTerm): AssetProxyQueryResult
     {
-        return new NeosAssetProxyQueryResult($this->assetRepository->findBySearchTermOrTags($searchTerm, []), $this->assetSource);
+        try {
+            return new NeosAssetProxyQueryResult($this->assetRepository->findBySearchTermOrTags($searchTerm, []),
+                $this->assetSource);
+        } catch (InvalidQueryException $e) {
+        }
     }
 
     /**
@@ -123,11 +138,15 @@ final class NeosAssetProxyRepository implements AssetProxyRepository
      */
     public function findByTag(Tag $tag): AssetProxyQueryResult
     {
-        return new NeosAssetProxyQueryResult($this->assetRepository->findByTag($tag), $this->assetSource);
+        try {
+            return new NeosAssetProxyQueryResult($this->assetRepository->findByTag($tag), $this->assetSource);
+        } catch (InvalidQueryException $e) {
+        }
     }
 
     /**
      * @return AssetProxyQueryResult
+     * @throws \Neos\Flow\Persistence\Exception\InvalidQueryException
      */
     public function findUntagged(): AssetProxyQueryResult
     {

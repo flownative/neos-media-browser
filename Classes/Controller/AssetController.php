@@ -388,7 +388,7 @@ class AssetController extends ActionController
             $this->view->assignMultiple([
 //            'tags' => $assetProxy->getAssetCollections()->count() > 0 ? $this->tagRepository->findByAssetCollections($assetProxy->getAssetCollections()->toArray()) : $this->tagRepository->findAll(),
                 'assetProxy' => $assetProxy,
-//            'assetCollections' => $this->assetCollectionRepository->findAll()
+            'assetCollections' => $this->assetCollectionRepository->findAll()
             ]);
         } catch (AssetNotFoundException $e) {
             $this->throwStatus(404, 'Asset not found');
@@ -413,21 +413,23 @@ class AssetController extends ActionController
             throw new \RuntimeException('Given asset source is not configured.', 1509632166496);
         }
 
-        $assetBrowser = $this->assetSources[$assetSourceIdentifier]->getAssetProxyRepository();
+        $assetSource =  $this->assetSources[$assetSourceIdentifier];
+        $assetBrowser = $assetSource->getAssetProxyRepository();
+
         try {
             $assetProxy = $assetBrowser->getAssetProxy($assetProxyIdentifier);
 
             $this->view->assignMultiple([
 //            'tags' => $assetProxy->getAssetCollections()->count() > 0 ? $this->tagRepository->findByAssetCollections($assetProxy->getAssetCollections()->toArray()) : $this->tagRepository->findAll(),
                 'assetProxy' => $assetProxy,
-//            'assetCollections' => $this->assetCollectionRepository->findAll()
+                'assetCollections' => $this->assetCollectionRepository->findAll(),
+                'assetSource' => $assetSource
             ]);
         } catch (AssetNotFoundException $e) {
             $this->throwStatus(404, 'Asset not found');
         } catch (AssetSourceConnectionException $e) {
             $this->view->assign('connectionError', $e);
         }
-
     }
 
     /**

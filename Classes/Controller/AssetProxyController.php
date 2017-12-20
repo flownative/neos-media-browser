@@ -17,13 +17,14 @@ use Flownative\Media\Browser\AssetSource\AssetNotFoundException;
 use Flownative\Media\Browser\AssetSource\AssetSource;
 use Flownative\Media\Browser\AssetSource\AssetSourceConnectionException;
 use Flownative\Media\Browser\AssetSource\HasRemoteOriginal;
+use Flownative\Media\Browser\AssetSource\MediaAssetSourceAware;
 use Flownative\Media\Browser\Domain\Model\ImportedAsset;
 use Flownative\Media\Browser\Domain\Repository\ImportedAssetRepository;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Mvc\Controller\ActionController;
 use Neos\Flow\ResourceManagement\Exception;
 use Neos\Flow\ResourceManagement\ResourceManager;
-use Neos\Media\Domain\Model\Image;
+use Neos\Media\Domain\Model\Asset;
 use Neos\Media\Domain\Repository\AssetRepository;
 use Neos\Media\Domain\Strategy\AssetModelMappingStrategyInterface;
 
@@ -120,10 +121,14 @@ class AssetProxyController extends ActionController
                 return '';
             }
 
+            /** @var Asset $asset */
             $assetModelClassName = $this->assetModelMappingStrategy->map($assetResource);
-
             $asset = new $assetModelClassName($assetResource);
+            $asset->setAssetSourceIdentifier($assetSourceIdentifier);
+            if ($asset instanceof MediaAssetSourceAware) {
+            }
             $this->assetRepository->add($asset);
+
             $localAssetIdentifier = $this->persistenceManager->getIdentifierByObject($asset);
 
             $importedAsset = new ImportedAsset(

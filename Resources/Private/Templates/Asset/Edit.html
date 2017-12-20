@@ -5,7 +5,7 @@
 <f:section name="Title">Edit view</f:section>
 
 <f:section name="Content">
-    <f:form method="post" action="update" object="{assetProxy.asset}" objectName="assetProxy">
+    <f:form method="post" action="update" object="{assetProxy.asset}" objectName="asset">
         <div class="neos-row-fluid">
             <div class="neos-span6 neos-image-inputs">
                 <fieldset>
@@ -74,20 +74,22 @@
         </div>
         <div class="neos-footer">
             <f:link.action action="index" class="neos-button neos-action-cancel">{neos:backend.translate(id: 'cancel', package: 'Neos.Neos')}</f:link.action>
-            <f:security.ifAccess privilegeTarget="Flownative.Media.Browser:ReplaceAssetResource">
-                <f:link.action action="replaceAssetResource" arguments="{asset: assetProxy.asset}" class="neos-button" title="{neos:backend.translate(id: 'replaceAssetResource', package: 'Flownative.Media.Browser')}" data="{neos-toggle: 'tooltip', container: 'body'}">
-                    {neos:backend.translate(id: 'replace', package: 'Flownative.Media.Browser')}
-                </f:link.action>
-            </f:security.ifAccess>
-            <f:if condition="{assetProxy.asset.inUse}">
-                <f:then>
-                    <a title="{neos:backend.translate(id: 'deleteRelatedNodes', package: 'Flownative.Media.Browser')}" data-neos-toggle="tooltip" data-container="body" class="neos-button neos-button-danger neos-disabled">{neos:backend.translate(id: 'delete', package: 'Neos.Neos')}</a>
-                </f:then>
-                <f:else>
-                    <a data-toggle="modal" href="#asset-{assetProxy.asset -> f:format.identifier()}" class="neos-button neos-button-danger">{neos:backend.translate(id: 'delete', package: 'Neos.Neos')}</a>
-                </f:else>
+            <f:if condition="!{assetSource.readOnly}">
+                <f:security.ifAccess privilegeTarget="Flownative.Media.Browser:ReplaceAssetResource">
+                    <f:link.action action="replaceAssetResource" arguments="{asset: assetProxy.asset}" class="neos-button" title="{neos:backend.translate(id: 'replaceAssetResource', package: 'Flownative.Media.Browser')}" data="{neos-toggle: 'tooltip', container: 'body'}">
+                        {neos:backend.translate(id: 'replace', package: 'Flownative.Media.Browser')}
+                    </f:link.action>
+                </f:security.ifAccess>
+                <f:if condition="{assetProxy.asset.inUse}">
+                    <f:then>
+                        <a title="{neos:backend.translate(id: 'deleteRelatedNodes', package: 'Flownative.Media.Browser')}" data-neos-toggle="tooltip" data-container="body" class="neos-button neos-button-danger neos-disabled">{neos:backend.translate(id: 'delete', package: 'Neos.Neos')}</a>
+                    </f:then>
+                    <f:else>
+                        <a data-toggle="modal" href="#asset-{assetProxy.asset -> f:format.identifier()}" class="neos-button neos-button-danger">{neos:backend.translate(id: 'delete', package: 'Neos.Neos')}</a>
+                    </f:else>
+                </f:if>
+                <f:form.submit id="save" class="neos-button neos-button-primary" value="{neos:backend.translate(id: 'saveEditing', package: 'Flownative.Media.Browser')}" />
             </f:if>
-            <f:form.submit id="save" class="neos-button neos-button-primary" value="{neos:backend.translate(id: 'saveEditing', package: 'Flownative.Media.Browser')}" />
         </div>
         <div class="neos-hide" id="asset-{assetProxy.localAssetIdentifier}">
             <div class="neos-modal-centered">

@@ -36,4 +36,17 @@ final class ImportedAssetRepository extends Repository
         );
         return $query->execute()->getFirst();
     }
+
+    /**
+     * @param string $localAssetIdentifier
+     * @return object
+     */
+    public function findOneByLocalAssetIdentifier(string $localAssetIdentifier)
+    {
+        $query = $this->createQuery();
+        $query->matching(
+            $query->equals('localAssetIdentifier', $localAssetIdentifier)
+        );
+        return $query->execute()->getFirst();
+    }
 }
