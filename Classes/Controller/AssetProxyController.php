@@ -118,6 +118,7 @@ class AssetProxyController extends ActionController
                 $assetResource->setFilename($assetProxy->getFilename());
             } catch (Exception $e) {
                 $this->response->setStatus(500, 'Failed importing the asset from the original source.');
+                $this->systemLogger->log(sprintf('Failed importing an the asset %s from asset source %s. Original URI: %s', $assetProxy->getFilename(), $assetSourceIdentifier, $assetProxy->getOriginalUri()));
                 return '';
             }
 
