@@ -18,6 +18,7 @@ use Flownative\Media\Browser\AssetSource\AssetNotFoundException;
 use Flownative\Media\Browser\AssetSource\AssetSourceConnectionException;
 use Flownative\Media\Browser\AssetSource\AssetSource;
 use Flownative\Media\Browser\AssetSource\AssetTypeFilter;
+use Flownative\Media\Browser\AssetSource\SupportsSorting;
 use Flownative\Media\Browser\Domain\Session\BrowserState;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Repository\NodeDataRepository;
@@ -236,6 +237,9 @@ class AssetController extends ActionController
             $this->view->assign($optionName, $this->browserState->get($optionName));
         }
 
+        $assetProxyRepository = $activeAssetSource->getAssetProxyRepository();
+        $assetProxyRepository->filterByType(new AssetTypeFilter($this->browserState->get('filter')));
+
         if ($tagMode === self::TAG_GIVEN && $tag !== null) {
             $this->browserState->set('activeTag', $tag);
             $this->view->assign('activeTag', $tag);
@@ -277,14 +281,16 @@ class AssetController extends ActionController
             $this->browserState->set('tagMode', self::TAG_ALL);
         }
 
-        switch ($this->browserState->get('sortBy')) {
-            case 'Name':
-                $this->assetRepository->setDefaultOrderings(['resource.filename' => $this->browserState->get('sortDirection')]);
+        if ($assetProxyRepository instanceof SupportsSorting) {
+            switch ($this->browserState->get('sortBy')) {
+                case 'Name':
+                    $assetProxyRepository->setDefaultOrderings(['resource.filename' => $this->browserState->get('sortDirection')]);
                 break;
-            case 'Modified':
-            default:
-                $this->assetRepository->setDefaultOrderings(['lastModified' => $this->browserState->get('sortDirection')]);
+                case 'Modified':
+                default:
+                    $assetProxyRepository->setDefaultOrderings(['lastModified' => $this->browserState->get('sortDirection')]);
                 break;
+            }
         }
 
         $assetCollections = [];
@@ -296,9 +302,6 @@ class AssetController extends ActionController
         foreach ($activeAssetCollection !== null ? $activeAssetCollection->getTags() : $this->tagRepository->findAll() as $tag) {
             $tags[] = ['object' => $tag, 'count' => $this->assetRepository->countByTag($tag, $activeAssetCollection)];
         }
-
-        $assetProxyRepository = $activeAssetSource->getAssetProxyRepository();
-        $assetProxyRepository->filterByType(new AssetTypeFilter($this->browserState->get('filter')));
 
         // FIXME: re-implement support for asset collections
         try {

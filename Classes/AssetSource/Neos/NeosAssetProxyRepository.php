@@ -17,6 +17,7 @@ use Flownative\Media\Browser\AssetSource\AssetProxy;
 use Flownative\Media\Browser\AssetSource\AssetProxyQueryResult;
 use Flownative\Media\Browser\AssetSource\AssetProxyRepository;
 use Flownative\Media\Browser\AssetSource\AssetTypeFilter;
+use Flownative\Media\Browser\AssetSource\SupportsSorting;
 use Neos\Flow\Annotations\Inject;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 use Neos\Flow\Persistence\Exception\InvalidQueryException;
@@ -28,7 +29,7 @@ use Neos\Media\Domain\Repository\DocumentRepository;
 use Neos\Media\Domain\Repository\ImageRepository;
 use Neos\Media\Domain\Repository\VideoRepository;
 
-final class NeosAssetProxyRepository implements AssetProxyRepository
+final class NeosAssetProxyRepository implements AssetProxyRepository, SupportsSorting
 {
     /**
      * @Inject
@@ -76,6 +77,22 @@ final class NeosAssetProxyRepository implements AssetProxyRepository
     public function initializeObject(): void
     {
         $this->assetRepository = $this->objectManager->get($this->assetRepositoryClassNames[$this->assetTypeFilter]);
+    }
+
+    /**
+     * Sets the property names to order results by. Expected like this:
+     * array(
+     *  'foo' => \Neos\Flow\Persistence\QueryInterface::ORDER_ASCENDING,
+     *  'bar' => \Neos\Flow\Persistence\QueryInterface::ORDER_DESCENDING
+     * )
+     *
+     * @param array $defaultOrderings The property names to order by by default
+     * @return void
+     * @api
+     */
+    public function setDefaultOrderings(array $defaultOrderings)
+    {
+        $this->assetRepository->setDefaultOrderings($defaultOrderings);
     }
 
     /**
