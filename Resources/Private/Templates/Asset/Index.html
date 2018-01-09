@@ -38,40 +38,44 @@
                 </li>
             </ul>
         </div>
-        <div class="neos-dropdown" id="neos-sort-menu">
-            <span title="{neos:backend.translate(id: 'tooltip.sortOptions', package: 'Flownative.Media.Browser')}" data-neos-toggle="tooltip">
-                <a class="dropdown-toggle" href="#" data-neos-toggle="dropdown" data-target="#neos-sort-menu">
-                    <f:if condition="{sortDirection} === 'ASC'">
-                        <f:then>
-                            <i class="icon-{f:if(condition: '{sortBy} === \'Modified\'', then: 'sort-by-order', else: 'sort-by-alphabet')}"></i>
-                        </f:then>
-                        <f:else>
-                            <i class="icon-{f:if(condition: '{sortBy} === \'Modified\'', then: 'sort-by-order-alt', else: 'sort-by-alphabet-alt')}"></i>
-                        </f:else>
-                    </f:if>
-                </a>
-            </span>
-            <div class="neos-dropdown-menu-list neos-pull-right" role="menu">
-                <span class="neos-dropdown-menu-list-title">{neos:backend.translate(id: 'sortby', package: 'Flownative.Media.Browser')}</span>
-                <ul>
-                    <li>
-                        <f:link.action action="index" title="{neos:backend.translate(id: 'sortByLastModified', package: 'Flownative.Media.Browser')}" data="{neos-toggle: 'tooltip', placement: 'left'}" arguments="{sortBy: 'Modified'}" addQueryString="TRUE" class="{f:if(condition: '{sortBy} === \'Modified\'', then: 'neos-active')}"><i class="icon-sort-by-order"></i> {neos:backend.translate(id: 'field.lastModified', package: 'Flownative.Media.Browser')}</f:link.action>
-                    </li>
-                    <li>
-                        <f:link.action action="index" title="{neos:backend.translate(id: 'sortByName', package: 'Flownative.Media.Browser')}" data="{neos-toggle: 'tooltip', placement: 'left'}" arguments="{sortBy: 'Name'}" addQueryString="TRUE" class="{f:if(condition: '{sortBy} === \'Name\'', then: 'neos-active')}"><i class="icon-sort-by-alphabet"></i> {neos:backend.translate(id: 'field.name', package: 'Flownative.Media.Browser')}</f:link.action>
-                    </li>
-                </ul>
-                <span class="neos-dropdown-menu-list-title">{neos:backend.translate(id: 'sortDirection', package: 'Flownative.Media.Browser')}</span>
-                <ul>
-                    <li>
-                        <f:link.action action="index" title="{neos:backend.translate(id: 'sortDirection.asc.tooltip', package: 'Flownative.Media.Browser')}" data="{neos-toggle: 'tooltip', placement: 'left'}" arguments="{sortDirection: 'ASC'}" addQueryString="TRUE" class="{f:if(condition: '{sortDirection} === \'ASC\'', then: 'neos-active')}"><i class="icon-{f:if(condition: '{sortBy} === \'Name\'', then: 'sort-by-alphabet', else: 'sort-by-order')}"></i> {neos:backend.translate(id: 'sortDirection.asc', package: 'Flownative.Media.Browser')}</f:link.action>
-                    </li>
-                    <li>
-                        <f:link.action action="index" title="{neos:backend.translate(id: 'sortDirection.desc.tooltip', package: 'Flownative.Media.Browser')}" data="{neos-toggle: 'tooltip', placement: 'left'}" arguments="{sortDirection: 'DESC'}" addQueryString="TRUE" class="{f:if(condition: '{sortDirection} === \'DESC\'', then: 'neos-active')}"><i class="icon-{f:if(condition: '{sortBy} === \'Name\'', then: 'sort-by-alphabet-alt', else: 'sort-by-order-alt')}"></i> {neos:backend.translate(id: 'sortDirection.desc', package: 'Flownative.Media.Browser')}</f:link.action>
-                    </li>
-                </ul>
-            </div>
-        </div>
+        <f:if condition="{activeAssetSourceSupportsSorting}">
+            <f:then>
+                <div class="neos-dropdown" id="neos-sort-menu">
+                    <span title="{neos:backend.translate(id: 'tooltip.sortOptions', package: 'Flownative.Media.Browser')}" data-neos-toggle="tooltip">
+                        <a class="dropdown-toggle" href="#" data-neos-toggle="dropdown" data-target="#neos-sort-menu">
+                            <f:if condition="{sortDirection} === 'ASC'">
+                                <f:then>
+                                    <i class="icon-{f:if(condition: '{sortBy} === \'Modified\'', then: 'sort-by-order', else: 'sort-by-alphabet')}"></i>
+                                </f:then>
+                                <f:else>
+                                    <i class="icon-{f:if(condition: '{sortBy} === \'Modified\'', then: 'sort-by-order-alt', else: 'sort-by-alphabet-alt')}"></i>
+                                </f:else>
+                            </f:if>
+                        </a>
+                    </span>
+                    <div class="neos-dropdown-menu-list neos-pull-right" role="menu">
+                        <span class="neos-dropdown-menu-list-title">{neos:backend.translate(id: 'sortby', package: 'Flownative.Media.Browser')}</span>
+                        <ul>
+                            <li>
+                                <f:link.action action="index" title="{neos:backend.translate(id: 'sortByLastModified', package: 'Flownative.Media.Browser')}" data="{neos-toggle: 'tooltip', placement: 'left'}" arguments="{sortBy: 'Modified'}" addQueryString="TRUE" class="{f:if(condition: '{sortBy} === \'Modified\'', then: 'neos-active')}"><i class="icon-sort-by-order"></i> {neos:backend.translate(id: 'field.lastModified', package: 'Flownative.Media.Browser')}</f:link.action>
+                            </li>
+                            <li>
+                                <f:link.action action="index" title="{neos:backend.translate(id: 'sortByName', package: 'Flownative.Media.Browser')}" data="{neos-toggle: 'tooltip', placement: 'left'}" arguments="{sortBy: 'Name'}" addQueryString="TRUE" class="{f:if(condition: '{sortBy} === \'Name\'', then: 'neos-active')}"><i class="icon-sort-by-alphabet"></i> {neos:backend.translate(id: 'field.name', package: 'Flownative.Media.Browser')}</f:link.action>
+                            </li>
+                        </ul>
+                        <span class="neos-dropdown-menu-list-title">{neos:backend.translate(id: 'sortDirection', package: 'Flownative.Media.Browser')}</span>
+                        <ul>
+                            <li>
+                                <f:link.action action="index" title="{neos:backend.translate(id: 'sortDirection.asc.tooltip', package: 'Flownative.Media.Browser')}" data="{neos-toggle: 'tooltip', placement: 'left'}" arguments="{sortDirection: 'ASC'}" addQueryString="TRUE" class="{f:if(condition: '{sortDirection} === \'ASC\'', then: 'neos-active')}"><i class="icon-{f:if(condition: '{sortBy} === \'Name\'', then: 'sort-by-alphabet', else: 'sort-by-order')}"></i> {neos:backend.translate(id: 'sortDirection.asc', package: 'Flownative.Media.Browser')}</f:link.action>
+                            </li>
+                            <li>
+                                <f:link.action action="index" title="{neos:backend.translate(id: 'sortDirection.desc.tooltip', package: 'Flownative.Media.Browser')}" data="{neos-toggle: 'tooltip', placement: 'left'}" arguments="{sortDirection: 'DESC'}" addQueryString="TRUE" class="{f:if(condition: '{sortDirection} === \'DESC\'', then: 'neos-active')}"><i class="icon-{f:if(condition: '{sortBy} === \'Name\'', then: 'sort-by-alphabet-alt', else: 'sort-by-order-alt')}"></i> {neos:backend.translate(id: 'sortDirection.desc', package: 'Flownative.Media.Browser')}</f:link.action>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </f:then>
+        </f:if>
         <f:if condition="{view} === 'Thumbnail'">
             <f:then>
                 <f:link.action action="index" title="{neos:backend.translate(id: 'tooltip.listView', package: 'Flownative.Media.Browser')}" arguments="{view: 'List'}" addQueryString="TRUE" data="{neos-toggle: 'tooltip'}"><i class="icon-th-list"></i></f:link.action>
@@ -265,7 +269,7 @@
                     <i class="icon-info-circle"></i> {neos:backend.translate(id: 'dragHelp', package: 'Flownative.Media.Browser')}
                 </div>
             </f:if>
-            <f:render partial="{view}View" arguments="{assetProxies: assetProxies, activeAssetSourceIdentifier: activeAssetSourceIdentifier, activeAssetSource: activeAssetSource, sortBy: sortBy, sortDirection: sortDirection}" />
+            <f:render partial="{view}View" arguments="{assetProxies: assetProxies, activeAssetSourceIdentifier: activeAssetSourceIdentifier, activeAssetSource: activeAssetSource, activeAssetSourceSupportsSorting: activeAssetSourceSupportsSorting, sortBy: sortBy, sortDirection: sortDirection}" />
 
             <div class="neos-hide" id="delete-asset-modal">
                 <div class="neos-modal-centered">

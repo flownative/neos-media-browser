@@ -230,10 +230,12 @@ class AssetController extends ActionController
         }
         $activeAssetSource = $this->assetSources[$activeAssetSourceIdentifier];
 
+        if (!empty($view)) $this->browserState->set('view', $view);
+        if (!empty($sortBy)) $this->browserState->set('sortBy', $sortBy);
+        if (!empty($sortDirection)) $this->browserState->set('sortDirection', $sortDirection);
+        if (!empty($filter)) $this->browserState->set('filter', $filter);
+
         foreach (['view', 'sortBy', 'sortDirection', 'filter'] as $optionName) {
-            if (!empty($$optionName)) {
-                $this->browserState->set($optionName, $$optionName);
-            }
             $this->view->assign($optionName, $this->browserState->get($optionName));
         }
 
@@ -334,7 +336,8 @@ class AssetController extends ActionController
             'maximumFileUploadSize' => $this->maximumFileUploadSize(),
             'humanReadableMaximumFileUploadSize' => Files::bytesToSizeString($this->maximumFileUploadSize()),
             'activeAssetSource' => $activeAssetSource,
-            'activeAssetSourceIdentifier' => $activeAssetSourceIdentifier
+            'activeAssetSourceIdentifier' => $activeAssetSourceIdentifier,
+            'activeAssetSourceSupportsSorting' => ($assetProxyRepository instanceof SupportsSorting)
         ]);
     }
 
