@@ -15,10 +15,16 @@ namespace Flownative\Media\Browser\AssetSource;
 interface SupportsSorting
 {
     /**
+     * Constants representing the direction when ordering result sets.
+     */
+    const ORDER_ASCENDING = 'ASC';
+    const ORDER_DESCENDING = 'DESC';
+
+    /**
      * Note: This method is preliminary, not to be used for third-party asset sources yet.
      *
      * @param array $orderings
-     * @return mixed
+     * @return void
      */
-    public function setDefaultOrderings(array $orderings);
+    public function orderBy(array $orderings): void;
 }

@@ -86,13 +86,13 @@ final class NeosAssetProxyRepository implements AssetProxyRepository, SupportsSo
      *  'bar' => \Neos\Flow\Persistence\QueryInterface::ORDER_DESCENDING
      * )
      *
-     * @param array $defaultOrderings The property names to order by by default
+     * @param array $orderings The property names to order by by default
      * @return void
      * @api
      */
-    public function setDefaultOrderings(array $defaultOrderings)
+    public function orderBy(array $orderings):void
     {
-        $this->assetRepository->setDefaultOrderings($defaultOrderings);
+        $this->assetRepository->setDefaultOrderings($orderings);
     }
 
     /**

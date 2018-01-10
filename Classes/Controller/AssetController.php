@@ -286,11 +286,11 @@ class AssetController extends ActionController
         if ($assetProxyRepository instanceof SupportsSorting) {
             switch ($this->browserState->get('sortBy')) {
                 case 'Name':
-                    $assetProxyRepository->setDefaultOrderings(['resource.filename' => $this->browserState->get('sortDirection')]);
+                    $assetProxyRepository->orderBy(['filename' => $this->browserState->get('sortDirection')]);
                 break;
                 case 'Modified':
                 default:
-                    $assetProxyRepository->setDefaultOrderings(['lastModified' => $this->browserState->get('sortDirection')]);
+                    $assetProxyRepository->orderBy(['lastModified' => $this->browserState->get('sortDirection')]);
                 break;
             }
         }
