@@ -51,9 +51,9 @@
                                         </li>
                                         <f:security.ifAccess privilegeTarget="Flownative.Media.Browser:ReplaceAssetResource">
                                             <li>
-                                                <a href="#" action="replaceAssetResource" arguments="{asset: assetProxy.asset}" title="{replaceAssetResourceLabel}" data="{neos-toggle: 'tooltip', placement: 'left'}">
+                                                <f:link.action action="replaceAssetResource" arguments="{asset: assetProxy.asset}" title="{replaceAssetResourceLabel}" data="{neos-toggle: 'tooltip', placement: 'left'}">
                                                     <i class="icon-random icon-white"></i> {replaceLabel}
-                                                </a>
+                                                </f:link.action>
                                             </li>
                                         </f:security.ifAccess>
                                         <li>
