@@ -14,6 +14,7 @@ namespace Flownative\Media\Browser\AssetSource\Neos;
 
 use Flownative\Media\Browser\AssetSource\AssetNotFoundException;
 use Flownative\Media\Browser\AssetSource\AssetProxy;
+use Flownative\Media\Browser\AssetSource\AssetProxyQuery;
 use Flownative\Media\Browser\AssetSource\AssetProxyQueryResult;
 use Flownative\Media\Browser\AssetSource\AssetProxyRepository;
 use Flownative\Media\Browser\AssetSource\AssetTypeFilter;
@@ -21,6 +22,7 @@ use Flownative\Media\Browser\AssetSource\SupportsSorting;
 use Neos\Flow\Annotations\Inject;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 use Neos\Flow\Persistence\Exception\InvalidQueryException;
+use Neos\Flow\Persistence\QueryInterface;
 use Neos\Media\Domain\Model\AssetInterface;
 use Neos\Media\Domain\Model\Tag;
 use Neos\Media\Domain\Repository\AssetRepository;
@@ -124,15 +126,7 @@ final class NeosAssetProxyRepository implements AssetProxyRepository, SupportsSo
     public function findAll(): AssetProxyQueryResult
     {
         $queryResult = $this->assetRepository->findAll();
-        $query = $queryResult->getQuery();
-        $constraint = $query->getConstraint();
-        $query->matching(
-            $query->logicalAnd(
-                $constraint,
-                $query->equals('assetSourceIdentifier', 'neos')
-            )
-        );
-
+        $query = $this->filterOutImportedAssetsFromOtherAssetSources($queryResult->getQuery());
         return new NeosAssetProxyQueryResult($query->execute(), $this->assetSource);
     }
 
@@ -143,8 +137,9 @@ final class NeosAssetProxyRepository implements AssetProxyRepository, SupportsSo
     public function findBySearchTerm(string $searchTerm): AssetProxyQueryResult
     {
         try {
-            return new NeosAssetProxyQueryResult($this->assetRepository->findBySearchTermOrTags($searchTerm, []),
-                $this->assetSource);
+            $queryResult = $this->assetRepository->findBySearchTermOrTags($searchTerm, []);
+            $query = $this->filterOutImportedAssetsFromOtherAssetSources($queryResult->getQuery());
+            return new NeosAssetProxyQueryResult($query->execute(), $this->assetSource);
         } catch (InvalidQueryException $e) {
         }
     }
@@ -156,18 +151,21 @@ final class NeosAssetProxyRepository implements AssetProxyRepository, SupportsSo
     public function findByTag(Tag $tag): AssetProxyQueryResult
     {
         try {
-            return new NeosAssetProxyQueryResult($this->assetRepository->findByTag($tag), $this->assetSource);
+            $queryResult = $this->assetRepository->findByTag($tag);
+            $query = $this->filterOutImportedAssetsFromOtherAssetSources($queryResult->getQuery());
+            return new NeosAssetProxyQueryResult($query->execute(), $this->assetSource);
         } catch (InvalidQueryException $e) {
         }
     }
 
     /**
      * @return AssetProxyQueryResult
-     * @throws \Neos\Flow\Persistence\Exception\InvalidQueryException
      */
     public function findUntagged(): AssetProxyQueryResult
     {
-        return new NeosAssetProxyQueryResult($this->assetRepository->findUntagged(), $this->assetSource);
+        $queryResult = $this->assetRepository->findUntagged();
+        $query = $this->filterOutImportedAssetsFromOtherAssetSources($queryResult->getQuery());
+        return new NeosAssetProxyQueryResult($query->execute(), $this->assetSource);
     }
 
     /**
@@ -176,5 +174,21 @@ final class NeosAssetProxyRepository implements AssetProxyRepository, SupportsSo
     public function countAll(): int
     {
         return $this->assetRepository->countAll();
+    }
+
+    /**
+     * @param QueryInterface $query
+     * @return QueryInterface
+     */
+    private function filterOutImportedAssetsFromOtherAssetSources(QueryInterface $query): QueryInterface
+    {
+        $constraint = $query->getConstraint();
+        $query->matching(
+            $query->logicalAnd([
+                $constraint,
+                $query->equals('assetSourceIdentifier', 'neos')
+            ])
+        );
+        return $query;
     }
 }
