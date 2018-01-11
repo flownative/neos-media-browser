@@ -173,7 +173,8 @@ final class NeosAssetProxyRepository implements AssetProxyRepository, SupportsSo
      */
     public function countAll(): int
     {
-        return $this->assetRepository->countAll();
+        $query = $this->filterOutImportedAssetsFromOtherAssetSources($this->assetRepository->createQuery());
+        return $query->count();
     }
 
     /**
