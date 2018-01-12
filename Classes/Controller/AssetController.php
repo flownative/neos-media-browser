@@ -15,6 +15,7 @@ namespace Flownative\Media\Browser\Controller;
 use Doctrine\Common\Persistence\Proxy as DoctrineProxy;
 use Doctrine\ORM\EntityNotFoundException;
 use Flownative\Media\Browser\AssetSource\AssetNotFoundException;
+use Flownative\Media\Browser\AssetSource\AssetProxyRepository;
 use Flownative\Media\Browser\AssetSource\AssetSourceConnectionException;
 use Flownative\Media\Browser\AssetSource\AssetSource;
 use Flownative\Media\Browser\AssetSource\AssetTypeFilter;
@@ -209,91 +210,32 @@ class AssetController extends ActionController
      * @param string $sortBy
      * @param string $sortDirection
      * @param string $filter
-     * @param integer $tagMode
+     * @param int $tagMode
      * @param Tag $tag
      * @param string $searchTerm
-     * @param integer $collectionMode
+     * @param int $collectionMode
      * @param AssetCollection $assetCollection
      * @param string $assetSourceIdentifier
      * @return void
+     * @throws \Neos\Utility\Exception\FilesException
      */
     public function indexAction($view = null, $sortBy = null, $sortDirection = null, $filter = null, $tagMode = self::TAG_GIVEN, Tag $tag = null, $searchTerm = null, $collectionMode = self::COLLECTION_GIVEN, AssetCollection $assetCollection = null, $assetSourceIdentifier = null)
     {
-        if ($assetSourceIdentifier !== null && isset($this->assetSources[$assetSourceIdentifier])) {
-            $this->browserState->setActiveAssetSourceIdentifier($assetSourceIdentifier);
-        }
+        // First, apply all options given to indexAction() and save them in the BrowserState object.
+        // Note that the order of these apply*() method calls plays a role, because they may depend on previous results:
+        $this->applyActiveAssetSourceToBrowserState($assetSourceIdentifier);
+        $this->applyAssetCollectionOptionsToBrowserState($collectionMode, $assetCollection);
 
-        $activeAssetSourceIdentifier = $this->browserState->getActiveAssetSourceIdentifier();
-        if (!isset($this->assetSources[$activeAssetSourceIdentifier])) {
-            $assetSourceIdentifiers = array_keys($this->assetSources);
-            $activeAssetSourceIdentifier = reset($assetSourceIdentifiers);
-        }
-        $activeAssetSource = $this->assetSources[$activeAssetSourceIdentifier];
-
-        if (!empty($view)) $this->browserState->set('view', $view);
-        if (!empty($sortBy)) $this->browserState->set('sortBy', $sortBy);
-        if (!empty($sortDirection)) $this->browserState->set('sortDirection', $sortDirection);
-        if (!empty($filter)) $this->browserState->set('filter', $filter);
-
-        foreach (['view', 'sortBy', 'sortDirection', 'filter'] as $optionName) {
-            $this->view->assign($optionName, $this->browserState->get($optionName));
-        }
-
+        $activeAssetSource = $this->getAssetSourceFromBrowserState();
         $assetProxyRepository = $activeAssetSource->getAssetProxyRepository();
-        $assetProxyRepository->filterByType(new AssetTypeFilter($this->browserState->get('filter')));
+        $activeAssetCollection = $this->getActiveAssetCollectionFromBrowserState();
 
-        if ($tagMode === self::TAG_GIVEN && $tag !== null) {
-            $this->browserState->set('activeTag', $tag);
-            $this->view->assign('activeTag', $tag);
-        } elseif ($tagMode === self::TAG_NONE || $tagMode === self::TAG_ALL) {
-            $this->browserState->set('activeTag', null);
-            $this->view->assign('activeTag', null);
-        }
-        $this->browserState->set('tagMode', $tagMode);
+        $this->applyViewOptionsToBrowserState($view, $sortBy, $sortDirection, $filter);
+        $this->applyTagToBrowserState($tagMode, $tag, $activeAssetCollection);
 
-        if ($collectionMode === self::COLLECTION_GIVEN && $assetCollection !== null) {
-            $this->browserState->set('activeAssetCollection', $assetCollection);
-            $this->view->assign('activeAssetCollection', $assetCollection);
-        } elseif ($collectionMode === self::COLLECTION_ALL) {
-            $this->browserState->set('activeAssetCollection', null);
-            $this->view->assign('activeAssetCollection', null);
-        }
-        $this->browserState->set('collectionMode', $collectionMode);
-
-        try {
-            /** @var AssetCollection $activeAssetCollection */
-            $activeAssetCollection = $this->browserState->get('activeAssetCollection');
-            if ($activeAssetCollection instanceof DoctrineProxy) {
-                // To trigger a possible EntityNotFound have to load the entity
-                $activeAssetCollection->__load();
-            }
-        } catch (EntityNotFoundException $exception) {
-            // If a removed asset collection is still in the browser state it can not be fetched
-            $this->browserState->set('activeAssetCollection', null);
-            $activeAssetCollection = null;
-        }
-
-        // Unset active tag if it isn't available in the active asset collection
-        if ($this->browserState->get('activeTag') && $activeAssetCollection !== null && !$activeAssetCollection->getTags()->contains($this->browserState->get('activeTag'))) {
-            $this->browserState->set('activeTag', null);
-            $this->view->assign('activeTag', null);
-        }
-
-        if (!$this->browserState->get('activeTag') && $this->browserState->get('tagMode') === self::TAG_GIVEN) {
-            $this->browserState->set('tagMode', self::TAG_ALL);
-        }
-
-        if ($assetProxyRepository instanceof SupportsSorting) {
-            switch ($this->browserState->get('sortBy')) {
-                case 'Name':
-                    $assetProxyRepository->orderBy(['filename' => $this->browserState->get('sortDirection')]);
-                break;
-                case 'Modified':
-                default:
-                    $assetProxyRepository->orderBy(['lastModified' => $this->browserState->get('sortDirection')]);
-                break;
-            }
-        }
+        // Second, apply the options from the browser state to the Asset Proxy Repository
+        $this->applyAssetTypeFilterFromBrowserState($assetProxyRepository);
+        $this->applySortingFromBrowserState($assetProxyRepository);
 
         $assetCollections = [];
         foreach ($this->assetCollectionRepository->findAll() as $assetCollection) {
@@ -305,7 +247,6 @@ class AssetController extends ActionController
             $tags[] = ['object' => $tag, 'count' => $this->assetRepository->countByTag($tag, $activeAssetCollection)];
         }
 
-        // FIXME: re-implement support for asset collections
         try {
             if ($searchTerm !== null) {
                 $assetProxies = $assetProxyRepository->findBySearchTerm($searchTerm);
@@ -327,7 +268,7 @@ class AssetController extends ActionController
         $this->view->assignMultiple([
             'tags' => $tags,
             'allCollectionsCount' => $allCollectionsCount,
-            'allCount' => $activeAssetCollection ? $this->assetRepository->countByAssetCollection($activeAssetCollection) : $allCollectionsCount,
+            'allCount' => ($activeAssetCollection ? $this->assetRepository->countByAssetCollection($activeAssetCollection) : $allCollectionsCount),
             'searchResultCount' => isset($assetProxies) ? $assetProxies->count() : 0,
             'untaggedCount' => $this->assetRepository->countUntagged($activeAssetCollection),
             'tagMode' => $this->browserState->get('tagMode'),
@@ -336,7 +277,6 @@ class AssetController extends ActionController
             'maximumFileUploadSize' => $this->maximumFileUploadSize(),
             'humanReadableMaximumFileUploadSize' => Files::bytesToSizeString($this->maximumFileUploadSize()),
             'activeAssetSource' => $activeAssetSource,
-            'activeAssetSourceIdentifier' => $activeAssetSourceIdentifier,
             'activeAssetSourceSupportsSorting' => ($assetProxyRepository instanceof SupportsSorting)
         ]);
     }
@@ -841,9 +781,148 @@ class AssetController extends ActionController
      * Returns the lowest configured maximum upload file size
      *
      * @return integer
+     * @throws \Neos\Utility\Exception\FilesException
      */
     protected function maximumFileUploadSize()
     {
         return min(Files::sizeStringToBytes(ini_get('post_max_size')), Files::sizeStringToBytes(ini_get('upload_max_filesize')));
+    }
+
+    /**
+     * @param string $view
+     * @param string $sortBy
+     * @param string $sortDirection
+     * @param string $filter
+     */
+    private function applyViewOptionsToBrowserState(string $view = null, string $sortBy = null, string $sortDirection = null, string $filter = null): void
+    {
+        if (!empty($view)) {
+            $this->browserState->set('view', $view);
+        }
+        if (!empty($sortBy)) {
+            $this->browserState->set('sortBy', $sortBy);
+        }
+        if (!empty($sortDirection)) {
+            $this->browserState->set('sortDirection', $sortDirection);
+        }
+        if (!empty($filter)) {
+            $this->browserState->set('filter', $filter);
+        }
+
+        foreach (['view', 'sortBy', 'sortDirection', 'filter'] as $optionName) {
+            $this->view->assign($optionName, $this->browserState->get($optionName));
+        }
+    }
+
+    /**
+     * @param $assetSourceIdentifier
+     */
+    private function applyActiveAssetSourceToBrowserState($assetSourceIdentifier)
+    {
+        if ($assetSourceIdentifier !== null && isset($this->assetSources[$assetSourceIdentifier])) {
+            $this->browserState->setActiveAssetSourceIdentifier($assetSourceIdentifier);
+        }
+    }
+
+    /**
+     * @param int $tagMode
+     * @param Tag $tag
+     * @param AssetCollection|null $activeAssetCollection
+     */
+    private function applyTagToBrowserState(int $tagMode = null, Tag $tag = null, AssetCollection $activeAssetCollection = null): void
+    {
+        if ($tagMode === self::TAG_GIVEN && $tag !== null) {
+            $this->browserState->set('activeTag', $tag);
+            $this->view->assign('activeTag', $tag);
+        } elseif ($tagMode === self::TAG_NONE || $tagMode === self::TAG_ALL) {
+            $this->browserState->set('activeTag', null);
+            $this->view->assign('activeTag', null);
+        }
+        $this->browserState->set('tagMode', $tagMode);
+
+        // Unset active tag if it isn't available in the active asset collection
+        if ($this->browserState->get('activeTag') && $activeAssetCollection !== null && !$activeAssetCollection->getTags()->contains($this->browserState->get('activeTag'))) {
+            $this->browserState->set('activeTag', null);
+            $this->view->assign('activeTag', null);
+        }
+
+        if (!$this->browserState->get('activeTag') && $this->browserState->get('tagMode') === self::TAG_GIVEN) {
+            $this->browserState->set('tagMode', self::TAG_ALL);
+        }
+    }
+
+    /**
+     * @return AssetSource
+     */
+    private function getAssetSourceFromBrowserState(): AssetSource
+    {
+        $assetSourceIdentifier = $this->browserState->getActiveAssetSourceIdentifier();
+        if (!isset($this->assetSources[$assetSourceIdentifier])) {
+            $assetSourceIdentifiers = array_keys($this->assetSources);
+            $assetSourceIdentifier = reset($assetSourceIdentifiers);
+        }
+        return $this->assetSources[$assetSourceIdentifier];
+    }
+
+    /**
+     * @param int $collectionMode
+     * @param AssetCollection $assetCollection
+     */
+    private function applyAssetCollectionOptionsToBrowserState(int $collectionMode = null, AssetCollection $assetCollection = null): void
+    {
+        if ($collectionMode === self::COLLECTION_GIVEN && $assetCollection !== null) {
+            $this->browserState->set('activeAssetCollection', $assetCollection);
+            $this->view->assign('activeAssetCollection', $assetCollection);
+        } elseif ($collectionMode === self::COLLECTION_ALL) {
+            $this->browserState->set('activeAssetCollection', null);
+            $this->view->assign('activeAssetCollection', null);
+        }
+        $this->browserState->set('collectionMode', $collectionMode);
+    }
+
+    /**
+     * @return AssetCollection|null
+     */
+    private function getActiveAssetCollectionFromBrowserState(): ?AssetCollection
+    {
+        try {
+            /** @var AssetCollection $activeAssetCollection */
+            $activeAssetCollection = $this->browserState->get('activeAssetCollection');
+            if ($activeAssetCollection instanceof DoctrineProxy) {
+                // To trigger a possible EntityNotFound have to load the entity
+                $activeAssetCollection->__load();
+            }
+        } catch (EntityNotFoundException $exception) {
+            // If a removed asset collection is still in the browser state it can not be fetched
+            $this->browserState->set('activeAssetCollection', null);
+            $activeAssetCollection = null;
+        }
+        return $activeAssetCollection;
+    }
+
+    /**
+     * @param AssetProxyRepository $assetProxyRepository
+     */
+    private function applySortingFromBrowserState(AssetProxyRepository $assetProxyRepository): void
+    {
+        if ($assetProxyRepository instanceof SupportsSorting) {
+            switch ($this->browserState->get('sortBy')) {
+                case 'Name':
+                    $assetProxyRepository->orderBy(['filename' => $this->browserState->get('sortDirection')]);
+                break;
+                case 'Modified':
+                default:
+                    $assetProxyRepository->orderBy(['lastModified' => $this->browserState->get('sortDirection')]);
+                break;
+            }
+        }
+    }
+
+    /**
+     * @param AssetProxyRepository $assetProxyRepository
+     */
+    private function applyAssetTypeFilterFromBrowserState(AssetProxyRepository $assetProxyRepository): void
+    {
+        $assetProxyRepository->filterByType(new AssetTypeFilter($this->browserState->get('filter')));
     }
 }

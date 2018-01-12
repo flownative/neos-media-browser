@@ -122,13 +122,13 @@
                                     <f:if condition="!{activeAssetSource.readOnly}">
                                         <f:then>
                                             <li>
-                                                <f:link.action action="edit" arguments="{assetSourceIdentifier: activeAssetSourceIdentifier, assetProxyIdentifier: assetProxy.identifier}" title="{editAssetLabel}" data="{neos-toggle: 'tooltip', placement: 'left'}">
+                                                <f:link.action action="edit" arguments="{assetSourceIdentifier: activeAssetSource.identifier, assetProxyIdentifier: assetProxy.identifier}" title="{editAssetLabel}" data="{neos-toggle: 'tooltip', placement: 'left'}">
                                                     <i class="icon-edit icon-white"></i> {editLabel}
                                                 </f:link.action>
                                             </li>
                                             <f:security.ifAccess privilegeTarget="Flownative.Media.Browser:ReplaceAssetResource">
                                                 <li>
-                                                    <f:link.action action="replaceAssetResource" arguments="{assetSourceIdentifier: activeAssetSourceIdentifier, assetProxyIdentifier: assetProxy.identifier}" data="{asset-identifier: '{assetProxy.identifier}'}" title="{replaceAssetResourceLabel}" data="{neos-toggle: 'tooltip', placement: 'left'}">
+                                                    <f:link.action action="replaceAssetResource" arguments="{assetSourceIdentifier: activeAssetSource.identifier, assetProxyIdentifier: assetProxy.identifier}" data="{asset-identifier: '{assetProxy.identifier}'}" title="{replaceAssetResourceLabel}" data="{neos-toggle: 'tooltip', placement: 'left'}">
                                                         <i class="icon-random icon-white"></i> {replaceLabel}
                                                     </f:link.action>
                                                 </li>
@@ -141,7 +141,7 @@
                                         </f:then>
                                         <f:else>
                                             <li>
-                                                <f:link.action action="show" arguments="{assetSourceIdentifier: activeAssetSourceIdentifier, assetProxyIdentifier: assetProxy.identifier}" title="{viewAssetLabel}" data="{neos-toggle: 'tooltip', placement: 'left'}">
+                                                <f:link.action action="show" arguments="{assetSourceIdentifier: activeAssetSource.identifier, assetProxyIdentifier: assetProxy.identifier}" title="{viewAssetLabel}" data="{neos-toggle: 'tooltip', placement: 'left'}">
                                                     <i class="icon-eye icon-white"></i> {viewLabel}
                                                 </f:link.action>
                                             </li>

@@ -100,7 +100,7 @@
         <ul class="neos-media-aside-list">
             <f:for each="{assetSources}" key="assetSourceIdentifier" as="assetSource">
                 <li>
-                    <f:link.action action="index" title="{assetSource.label}" class="{f:if(condition: '{assetSourceIdentifier} === {activeAssetSourceIdentifier}', then: ' neos-active')}" arguments="{assetSourceIdentifier: assetSourceIdentifier}">
+                    <f:link.action action="index" title="{assetSource.label}" class="{f:if(condition: '{assetSourceIdentifier} === {activeAssetSource.identifier}', then: ' neos-active')}" arguments="{assetSourceIdentifier: assetSourceIdentifier}">
                         {assetSource.label}
                     </f:link.action>
                 </li>
@@ -269,7 +269,7 @@
                     <i class="icon-info-circle"></i> {neos:backend.translate(id: 'dragHelp', package: 'Flownative.Media.Browser')}
                 </div>
             </f:if>
-            <f:render partial="{view}View" arguments="{assetProxies: assetProxies, activeAssetSourceIdentifier: activeAssetSourceIdentifier, activeAssetSource: activeAssetSource, activeAssetSourceSupportsSorting: activeAssetSourceSupportsSorting, sortBy: sortBy, sortDirection: sortDirection}" />
+            <f:render partial="{view}View" arguments="{assetProxies: assetProxies, activeAssetSource: activeAssetSource, activeAssetSourceSupportsSorting: activeAssetSourceSupportsSorting, sortBy: sortBy, sortDirection: sortDirection}" />
 
             <div class="neos-hide" id="delete-asset-modal">
                 <div class="neos-modal-centered">

@@ -98,6 +98,15 @@ final class NeosAssetProxyRepository implements AssetProxyRepository, SupportsSo
     }
 
     /**
+     * @param AssetTypeFilter $assetType
+     */
+    public function filterByType(AssetTypeFilter $assetType = null): void
+    {
+        $this->assetTypeFilter = (string)$assetType ?: 'All';
+        $this->initializeObject();
+    }
+
+    /**
      * @param string $identifier
      * @return AssetProxy
      * @throws AssetNotFoundException
@@ -109,15 +118,6 @@ final class NeosAssetProxyRepository implements AssetProxyRepository, SupportsSo
             throw new AssetNotFoundException('The specified asset was not found.', 1509632861103);
         }
         return new NeosAssetProxy($asset, $this->assetSource);
-    }
-
-    /**
-     * @param AssetTypeFilter $assetType
-     */
-    public function filterByType(AssetTypeFilter $assetType = null): void
-    {
-        $this->assetTypeFilter = (string)$assetType ?: 'All';
-        $this->initializeObject();
     }
 
     /**
