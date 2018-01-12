@@ -273,7 +273,7 @@ class AssetController extends ActionController
             'allCollectionsCount' => $allCollectionsCount,
             'allCount' => ($activeAssetCollection ? $this->assetRepository->countByAssetCollection($activeAssetCollection) : $allCollectionsCount),
             'searchResultCount' => isset($assetProxies) ? $assetProxies->count() : 0,
-            'untaggedCount' => ($assetProxyRepository instanceof SupportsTagging ? $assetProxyRepository->countsUntagged() : 0),
+            'untaggedCount' => ($assetProxyRepository instanceof SupportsTagging ? $assetProxyRepository->countUntagged() : 0),
             'tagMode' => $this->browserState->get('tagMode'),
             'assetCollections' => $assetCollections,
             'argumentNamespace' => $this->request->getArgumentNamespace(),

@@ -12,7 +12,6 @@ namespace Flownative\Media\Browser\AssetSource\Neos;
  * source code.
  */
 
-use Doctrine\ORM\Query\ResultSetMapping;
 use Flownative\Media\Browser\AssetSource\AssetNotFoundException;
 use Flownative\Media\Browser\AssetSource\AssetProxy;
 use Flownative\Media\Browser\AssetSource\AssetProxyQueryResult;
