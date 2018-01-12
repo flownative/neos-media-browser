@@ -19,7 +19,9 @@ use Flownative\Media\Browser\AssetSource\AssetProxyRepository;
 use Flownative\Media\Browser\AssetSource\AssetSourceConnectionException;
 use Flownative\Media\Browser\AssetSource\AssetSource;
 use Flownative\Media\Browser\AssetSource\AssetTypeFilter;
+use Flownative\Media\Browser\AssetSource\SupportsCollections;
 use Flownative\Media\Browser\AssetSource\SupportsSorting;
+use Flownative\Media\Browser\AssetSource\SupportsTagging;
 use Flownative\Media\Browser\Domain\Session\BrowserState;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Repository\NodeDataRepository;
@@ -236,6 +238,7 @@ class AssetController extends ActionController
         // Second, apply the options from the browser state to the Asset Proxy Repository
         $this->applyAssetTypeFilterFromBrowserState($assetProxyRepository);
         $this->applySortingFromBrowserState($assetProxyRepository);
+        $this->applyAssetCollectionFilterFromBrowserState($assetProxyRepository);
 
         $assetCollections = [];
         foreach ($this->assetCollectionRepository->findAll() as $assetCollection) {
@@ -270,7 +273,7 @@ class AssetController extends ActionController
             'allCollectionsCount' => $allCollectionsCount,
             'allCount' => ($activeAssetCollection ? $this->assetRepository->countByAssetCollection($activeAssetCollection) : $allCollectionsCount),
             'searchResultCount' => isset($assetProxies) ? $assetProxies->count() : 0,
-            'untaggedCount' => $this->assetRepository->countUntagged($activeAssetCollection),
+            'untaggedCount' => ($assetProxyRepository instanceof SupportsTagging ? $assetProxyRepository->countsUntagged() : 0),
             'tagMode' => $this->browserState->get('tagMode'),
             'assetCollections' => $assetCollections,
             'argumentNamespace' => $this->request->getArgumentNamespace(),
@@ -924,5 +927,15 @@ class AssetController extends ActionController
     private function applyAssetTypeFilterFromBrowserState(AssetProxyRepository $assetProxyRepository): void
     {
         $assetProxyRepository->filterByType(new AssetTypeFilter($this->browserState->get('filter')));
+    }
+
+    /**
+     * @param AssetProxyRepository $assetProxyRepository
+     */
+    private function applyAssetCollectionFilterFromBrowserState(AssetProxyRepository $assetProxyRepository): void
+    {
+        if ($assetProxyRepository instanceof SupportsCollections) {
+            $assetProxyRepository->filterByCollection($this->getActiveAssetCollectionFromBrowserState());
+        }
     }
 }

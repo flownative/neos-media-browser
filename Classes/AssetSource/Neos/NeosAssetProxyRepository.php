@@ -12,17 +12,20 @@ namespace Flownative\Media\Browser\AssetSource\Neos;
  * source code.
  */
 
+use Doctrine\ORM\Query\ResultSetMapping;
 use Flownative\Media\Browser\AssetSource\AssetNotFoundException;
 use Flownative\Media\Browser\AssetSource\AssetProxy;
-use Flownative\Media\Browser\AssetSource\AssetProxyQuery;
 use Flownative\Media\Browser\AssetSource\AssetProxyQueryResult;
 use Flownative\Media\Browser\AssetSource\AssetProxyRepository;
 use Flownative\Media\Browser\AssetSource\AssetTypeFilter;
+use Flownative\Media\Browser\AssetSource\SupportsCollections;
 use Flownative\Media\Browser\AssetSource\SupportsSorting;
+use Flownative\Media\Browser\AssetSource\SupportsTagging;
 use Neos\Flow\Annotations\Inject;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 use Neos\Flow\Persistence\Exception\InvalidQueryException;
 use Neos\Flow\Persistence\QueryInterface;
+use Neos\Media\Domain\Model\AssetCollection;
 use Neos\Media\Domain\Model\AssetInterface;
 use Neos\Media\Domain\Model\Tag;
 use Neos\Media\Domain\Repository\AssetRepository;
@@ -31,13 +34,21 @@ use Neos\Media\Domain\Repository\DocumentRepository;
 use Neos\Media\Domain\Repository\ImageRepository;
 use Neos\Media\Domain\Repository\VideoRepository;
 
-final class NeosAssetProxyRepository implements AssetProxyRepository, SupportsSorting
+final class NeosAssetProxyRepository implements AssetProxyRepository, SupportsSorting, SupportsCollections, SupportsTagging
 {
     /**
      * @Inject
      * @var ObjectManagerInterface
      */
     protected $objectManager;
+
+    /**
+     * Doctrine's Entity Manager. Note that "ObjectManager" is the name of the related interface ...
+     *
+     * @Inject
+     * @var \Doctrine\Common\Persistence\ObjectManager
+     */
+    protected $entityManager;
 
     /**
      * @var NeosAssetSource
@@ -53,6 +64,11 @@ final class NeosAssetProxyRepository implements AssetProxyRepository, SupportsSo
      * @var string
      */
     private $assetTypeFilter = 'All';
+
+    /**
+     * @var AssetCollection
+     */
+    private $activeAssetCollection;
 
     /**
      * @var array
@@ -107,6 +123,17 @@ final class NeosAssetProxyRepository implements AssetProxyRepository, SupportsSo
     }
 
     /**
+     * NOTE: This needs to be refactored to use an asset collection identifier instead of Media's domain model before
+     *       it can become a public API for other asset sources.
+     *
+     * @param AssetCollection $assetCollection
+     */
+    public function filterByCollection(AssetCollection $assetCollection = null): void
+    {
+        $this->activeAssetCollection = $assetCollection;
+    }
+
+    /**
      * @param string $identifier
      * @return AssetProxy
      * @throws AssetNotFoundException
@@ -125,7 +152,7 @@ final class NeosAssetProxyRepository implements AssetProxyRepository, SupportsSo
      */
     public function findAll(): AssetProxyQueryResult
     {
-        $queryResult = $this->assetRepository->findAll();
+        $queryResult = $this->assetRepository->findAll($this->activeAssetCollection);
         $query = $this->filterOutImportedAssetsFromOtherAssetSources($queryResult->getQuery());
         return new NeosAssetProxyQueryResult($query->execute(), $this->assetSource);
     }
@@ -136,12 +163,9 @@ final class NeosAssetProxyRepository implements AssetProxyRepository, SupportsSo
      */
     public function findBySearchTerm(string $searchTerm): AssetProxyQueryResult
     {
-        try {
-            $queryResult = $this->assetRepository->findBySearchTermOrTags($searchTerm, []);
-            $query = $this->filterOutImportedAssetsFromOtherAssetSources($queryResult->getQuery());
-            return new NeosAssetProxyQueryResult($query->execute(), $this->assetSource);
-        } catch (InvalidQueryException $e) {
-        }
+        $queryResult = $this->assetRepository->findBySearchTermOrTags($searchTerm, [], $this->activeAssetCollection);
+        $query = $this->filterOutImportedAssetsFromOtherAssetSources($queryResult->getQuery());
+        return new NeosAssetProxyQueryResult($query->execute(), $this->assetSource);
     }
 
     /**
@@ -150,12 +174,9 @@ final class NeosAssetProxyRepository implements AssetProxyRepository, SupportsSo
      */
     public function findByTag(Tag $tag): AssetProxyQueryResult
     {
-        try {
-            $queryResult = $this->assetRepository->findByTag($tag);
-            $query = $this->filterOutImportedAssetsFromOtherAssetSources($queryResult->getQuery());
-            return new NeosAssetProxyQueryResult($query->execute(), $this->assetSource);
-        } catch (InvalidQueryException $e) {
-        }
+        $queryResult = $this->assetRepository->findByTag($tag, $this->activeAssetCollection);
+        $query = $this->filterOutImportedAssetsFromOtherAssetSources($queryResult->getQuery());
+        return new NeosAssetProxyQueryResult($query->execute(), $this->assetSource);
     }
 
     /**
@@ -163,7 +184,7 @@ final class NeosAssetProxyRepository implements AssetProxyRepository, SupportsSo
      */
     public function findUntagged(): AssetProxyQueryResult
     {
-        $queryResult = $this->assetRepository->findUntagged();
+        $queryResult = $this->assetRepository->findUntagged($this->activeAssetCollection);
         $query = $this->filterOutImportedAssetsFromOtherAssetSources($queryResult->getQuery());
         return new NeosAssetProxyQueryResult($query->execute(), $this->assetSource);
     }
@@ -174,6 +195,24 @@ final class NeosAssetProxyRepository implements AssetProxyRepository, SupportsSo
     public function countAll(): int
     {
         $query = $this->filterOutImportedAssetsFromOtherAssetSources($this->assetRepository->createQuery());
+        $query = $this->filterOutAssetsFromOtherAssetCollections($query);
+        return $query->count();
+    }
+
+    /**
+     * @return int
+     */
+    public function countUntagged(): int
+    {
+        $query = $this->assetRepository->createQuery();
+        try {
+            $query->matching($query->isEmpty('tags'));
+        } catch (InvalidQueryException $e) {
+        }
+
+        $query = $this->filterOutImportedAssetsFromOtherAssetSources($query);
+        $query = $this->filterOutAssetsFromOtherAssetCollections($query);
+        $query = $this->filterOutImageVariants($query);
         return $query->count();
     }
 
@@ -190,6 +229,40 @@ final class NeosAssetProxyRepository implements AssetProxyRepository, SupportsSo
                 $query->equals('assetSourceIdentifier', 'neos')
             ])
         );
+        return $query;
+    }
+
+    /**
+     * @param QueryInterface $query
+     * @return QueryInterface
+     */
+    private function filterOutImageVariants(QueryInterface $query): QueryInterface
+    {
+        $queryBuilder = $query->getQueryBuilder();
+        $queryBuilder->andWhere('e NOT INSTANCE OF Neos\Media\Domain\Model\ImageVariant');
+        return $query;
+    }
+
+    /**
+     * @param QueryInterface $query
+     * @return QueryInterface
+     */
+    private function filterOutAssetsFromOtherAssetCollections(QueryInterface $query): QueryInterface
+    {
+        if ($this->activeAssetCollection === null) {
+            return $query;
+        }
+
+        $constraints = $query->getConstraint();
+        try {
+            $query->matching(
+                $query->logicalAnd([
+                    $constraints,
+                    $query->contains('assetCollections', $this->activeAssetCollection)
+                ])
+            );
+        } catch (InvalidQueryException $e) {
+        }
         return $query;
     }
 }
