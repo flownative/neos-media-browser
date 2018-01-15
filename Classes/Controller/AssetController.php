@@ -19,6 +19,7 @@ use Flownative\Media\Browser\AssetSource\AssetProxyRepository;
 use Flownative\Media\Browser\AssetSource\AssetSourceConnectionException;
 use Flownative\Media\Browser\AssetSource\AssetSource;
 use Flownative\Media\Browser\AssetSource\AssetTypeFilter;
+use Flownative\Media\Browser\AssetSource\Neos\NeosAssetProxy;
 use Flownative\Media\Browser\AssetSource\SupportsCollections;
 use Flownative\Media\Browser\AssetSource\SupportsSorting;
 use Flownative\Media\Browser\AssetSource\SupportsTagging;
@@ -363,13 +364,29 @@ class AssetController extends ActionController
         }
 
         $assetSource =  $this->assetSources[$assetSourceIdentifier];
-        $assetBrowser = $assetSource->getAssetProxyRepository();
+        $assetProxyRepository = $assetSource->getAssetProxyRepository();
 
         try {
-            $assetProxy = $assetBrowser->getAssetProxy($assetProxyIdentifier);
+            $assetProxy = $assetProxyRepository->getAssetProxy($assetProxyIdentifier);
+
+            $tags = [];
+            if ($assetProxyRepository instanceof SupportsTagging) {
+                if ($assetProxyRepository instanceof SupportsCollections) {
+                    // TODO: For generic implementation (allowing other asset sources to provide asset collections), the following needs to be refactored:
+
+                    if ($assetProxy instanceof NeosAssetProxy) {
+                        /** @var Asset $asset */
+                        $asset = $assetProxy->getAsset();
+                        $assetCollections = $asset->getAssetCollections();
+                        $tags = $assetCollections->count() > 0 ? $this->tagRepository->findByAssetCollections($assetCollections->toArray()) : $this->tagRepository->findAll();
+                    } else {
+                        $tags = [];
+                    }
+                }
+            }
 
             $this->view->assignMultiple([
-//            'tags' => $assetProxy->getAssetCollections()->count() > 0 ? $this->tagRepository->findByAssetCollections($assetProxy->getAssetCollections()->toArray()) : $this->tagRepository->findAll(),
+                'tags' => $tags,
                 'assetProxy' => $assetProxy,
                 'assetCollections' => $this->assetCollectionRepository->findAll(),
                 'assetSource' => $assetSource
